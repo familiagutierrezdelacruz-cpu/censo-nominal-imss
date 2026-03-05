@@ -1,0 +1,5 @@
+{
+  "name": "Asistente de Censo Nominal Materno",
+  "description": "Gestión experta de censos nominales de embarazadas y puérperas con cálculos clínicos automáticos y reportes estructurados.",
+  "requestFramePermissions": []
+}
