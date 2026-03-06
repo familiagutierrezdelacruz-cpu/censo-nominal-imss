@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
-    "start": "tsx server.ts",
-    "build": "vite build",
+    "start": "node dist-server/server.js",
+    "build": "vite build && tsc server.ts --outDir dist-server --module esnext --moduleResolution node --esModuleInterop --skipLibCheck",
     "preview": "vite preview",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist dist-server",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

@@ -764,10 +764,15 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(__dirname, "dist");
+    // In production, server.js is in dist-server/, so dist/ might be one level up
+    let distPath = path.join(__dirname, "dist");
+    if (!fs.existsSync(distPath)) {
+      distPath = path.join(__dirname, "..", "dist");
+    }
+
     console.log(`[SERVER] Production mode. Serving static files from: ${distPath}`);
     if (!fs.existsSync(distPath)) {
-      console.error(`[SERVER ERROR] 'dist' folder not found at ${distPath}. Did you run 'npm run build'?`);
+      console.error(`[SERVER ERROR] static 'dist' folder not found anywhere!`);
     }
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
