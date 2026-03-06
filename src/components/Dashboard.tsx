@@ -26,9 +26,13 @@ const COLORS = ['#10b981', '#f59e0b', '#3b82f6', '#ef4444'];
 export default function Dashboard({ records, user }: DashboardProps) {
   // Filter for currently pregnant women (excluding historical)
   const pregnantRecords = records.filter(r => Number(r.is_historical) !== 1 && r.condicion.startsWith('EMBARAZADA'));
+  const pregnantPrimeraVez = pregnantRecords.filter(r => r.condicion === 'EMBARAZADA DE PRIMERA VEZ');
+  const pregnantSubsecuente = pregnantRecords.filter(r => r.condicion === 'EMBARAZADA SUBSECUENTE');
 
   // Filter for postpartum women (puerperas)
   const puerperasRecords = records.filter(r => Number(r.is_historical) !== 1 && r.condicion.startsWith('PUERPERA'));
+  const puerperasPrimeraVez = puerperasRecords.filter(r => r.condicion === 'PUERPERA DE PRIMERA VEZ');
+  const puerperasSubsecuente = puerperasRecords.filter(r => r.condicion === 'PUERPERA SUBSECUENTE');
 
   // 1. Pregnant Age Distribution
   const ageData = [
@@ -125,16 +129,41 @@ export default function Dashboard({ records, user }: DashboardProps) {
           colorClass="bg-emerald-100 text-emerald-600"
         />
         <StatCard
-          title="Total Puérperas"
-          value={puerperasRecords.length}
+          title="Emb. Primera Vez"
+          value={pregnantPrimeraVez.length}
           icon={Users}
-          colorClass="bg-blue-100 text-blue-600"
+          colorClass="bg-emerald-50 text-emerald-700"
+        />
+        <StatCard
+          title="Emb. Subsecuentes"
+          value={pregnantSubsecuente.length}
+          icon={Users}
+          colorClass="bg-emerald-100 text-emerald-700"
         />
         <StatCard
           title={"Sin Consulta > 30d (Emb)"}
           value={stalePregnant.length}
           icon={Clock}
           colorClass="bg-amber-100 text-amber-600"
+        />
+
+        <StatCard
+          title="Total Puérperas"
+          value={puerperasRecords.length}
+          icon={Users}
+          colorClass="bg-blue-100 text-blue-600"
+        />
+        <StatCard
+          title="Puérperas Primera Vez"
+          value={puerperasPrimeraVez.length}
+          icon={Users}
+          colorClass="bg-blue-50 text-blue-700"
+        />
+        <StatCard
+          title="Puérperas Subsecuente"
+          value={puerperasSubsecuente.length}
+          icon={Users}
+          colorClass="bg-blue-100 text-blue-700"
         />
         <StatCard
           title={"Sin Consulta > 7d (Puérp)"}
