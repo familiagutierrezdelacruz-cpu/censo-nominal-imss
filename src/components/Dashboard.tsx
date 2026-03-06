@@ -68,20 +68,18 @@ export default function Dashboard({ records, user }: DashboardProps) {
     return false;
   });
 
-  // 4. Puerperio Distribution
-  const puerperioData = [
-    { name: 'Inmediato (≤ 1d)', value: 0 },
-    { name: 'Mediato (2-7d)', value: 0 },
-    { name: 'Tardío (8-41d)', value: 0 },
-    { name: 'Post-Tardío (> 41d)', value: 0 },
+  // 4. Coopland Risk Distribution (Pregnant Only)
+  const riskData = [
+    { name: 'Bajo Riesgo (0-3)', value: 0 },
+    { name: 'Riesgo Moderado (4-6)', value: 0 },
+    { name: 'Alto Riesgo (> 6)', value: 0 },
   ];
 
-  puerperasRecords.forEach(r => {
-    const days = calculateDaysSinceUpdate(r.fecha_atencion_evento);
-    if (days <= 1) puerperioData[0].value++;
-    else if (days <= 7) puerperioData[1].value++;
-    else if (days <= 41) puerperioData[2].value++;
-    else puerperioData[3].value++;
+  pregnantRecords.forEach(r => {
+    const score = r.riesgo_obstetrico || 0;
+    if (score <= 3) riskData[0].value++;
+    else if (score <= 6) riskData[1].value++;
+    else riskData[2].value++;
   });
 
   // 5. Nucleo Distribution
@@ -174,14 +172,14 @@ export default function Dashboard({ records, user }: DashboardProps) {
           </div>
         </div>
 
-        {/* Puerperio Distribution Chart */}
+        {/* Coopland Risk Distribution Chart */}
         <div className="bg-white p-8 rounded-2xl border border-[#141414]/10 shadow-sm">
-          <h3 className="font-serif italic text-lg mb-6 border-b border-[#141414]/5 pb-2">Distribución de Puerperio (Etapas)</h3>
+          <h3 className="font-serif italic text-lg mb-6 border-b border-[#141414]/5 pb-2">Distribución por Riesgo (Coopland)</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={puerperioData}
+                  data={riskData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -190,9 +188,9 @@ export default function Dashboard({ records, user }: DashboardProps) {
                   dataKey="value"
                   label={({ name, value }) => `${name}: ${value}`}
                 >
-                  {puerperioData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
-                  ))}
+                  <Cell fill="#10b981" /> {/* Bajo */}
+                  <Cell fill="#f59e0b" /> {/* Moderado */}
+                  <Cell fill="#ef4444" /> {/* Alto */}
                 </Pie>
                 <Tooltip />
                 <Legend />
@@ -223,19 +221,19 @@ export default function Dashboard({ records, user }: DashboardProps) {
 
         {/* Summary Table for Critical Cases */}
         <div className="bg-white p-8 rounded-2xl border border-[#141414]/10 shadow-sm">
-          <h3 className="font-serif italic text-lg mb-6 border-b border-[#141414]/5 pb-2">Casos Críticos (Alerta Temprana)</h3>
+          <h3 className="font-serif italic text-lg mb-6 border-b border-[#141414]/5 pb-2">Resumen de Riesgo y Alertas</h3>
           <div className="space-y-4">
+            <div className="flex justify-between items-center p-3 bg-red-50 rounded-xl border border-red-100">
+              <span className="text-xs font-bold text-red-700 uppercase tracking-wider">Alto Riesgo Obstetrico</span>
+              <span className="text-xl font-mono font-bold text-red-700">{riskData[2].value}</span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-amber-50 rounded-xl border border-amber-100">
+              <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">Riesgo Moderado</span>
+              <span className="text-xl font-mono font-bold text-amber-700">{riskData[1].value}</span>
+            </div>
             <div className="flex justify-between items-center p-3 bg-red-50 rounded-xl border border-red-100">
               <span className="text-xs font-bold text-red-700 uppercase tracking-wider">Emb. Prolongados ({'>'} 41 SDG)</span>
               <span className="text-xl font-mono font-bold text-red-700">{overduePregnancies.length}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-red-50 rounded-xl border border-red-100">
-              <span className="text-xs font-bold text-red-700 uppercase tracking-wider">Puérperas sin consulta {'>'} 7 días</span>
-              <span className="text-xl font-mono font-bold text-red-700">{stalePuerperas.length}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-amber-50 rounded-xl border border-amber-100">
-              <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">Emb. sin consulta {'>'} 30 días</span>
-              <span className="text-xl font-mono font-bold text-amber-700">{stalePregnant.length}</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-emerald-50 rounded-xl border border-emerald-100">
               <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Emb. Adolescentes (≤ 15 años)</span>
