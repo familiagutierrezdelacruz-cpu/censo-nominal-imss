@@ -174,12 +174,10 @@ db.exec(`
   )
 `);
 
-// Migration: Add is_historical if it doesn't exist
-try {
-  db.exec(`ALTER TABLE census ADD COLUMN is_historical INTEGER DEFAULT 0`);
-} catch (e) {
-  // Column already exists
-}
+// Initial database check
+console.log(`[DB] Initializing database at: ${DB_PATH}`);
+const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
+console.log(`[DB] Found tables: ${tables.map((t: any) => t.name).join(", ")}`);
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS nucleos (
@@ -196,7 +194,7 @@ db.exec(`
 // Migration: Add new columns if they don't exist
 const columns = db.prepare("PRAGMA table_info(census)").all() as any[];
 const columnNames = columns.map(c => c.name);
-console.log('Current census table columns:', columnNames);
+console.log('[DB] Current census table columns:', columnNames.length);
 
 const validColumns = [
   "health_unit_id", "folio", "nombre", "curp", "telefono", "domicilio", "reporte_mp", "folio_intransferible", "tipo_localidad",
@@ -220,24 +218,22 @@ const validColumns = [
   "is_historical"
 ];
 
-for (const col of validColumns) {
-  if (!columnNames.includes(col)) {
-    console.log(`Adding column ${col} to census table...`);
-    try {
-      const type = col === 'is_historical' ? 'INTEGER DEFAULT 0' : 'TEXT';
-      db.exec(`ALTER TABLE census ADD COLUMN ${col} ${type}`);
-    } catch (err) {
-      console.error(`Failed to add column ${col}:`, err);
+db.transaction(() => {
+  for (const col of validColumns) {
+    if (!columnNames.includes(col)) {
+      console.log(`[DB] Adding missing column: ${col}`);
+      try {
+        const type = col === 'is_historical' ? 'INTEGER DEFAULT 0' : 'TEXT';
+        db.exec(`ALTER TABLE census ADD COLUMN ${col} ${type}`);
+      } catch (err) {
+        console.error(`[DB ERROR] Failed to add column ${col}:`, err);
+      }
     }
   }
-}
-
-// Ensure all records have a value for is_historical
-try {
+  // Ensure all records have a value for is_historical
   db.exec("UPDATE census SET is_historical = 0 WHERE is_historical IS NULL");
-} catch (err) {
-  console.error("Failed to update NULL is_historical values:", err);
-}
+})();
+console.log('[DB] Database migration check completed.');
 
 // Auth Middleware
 const authenticateToken = (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -768,15 +764,24 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static(path.join(__dirname, "dist")));
+    const distPath = path.join(__dirname, "dist");
+    console.log(`[SERVER] Production mode. Serving static files from: ${distPath}`);
+    if (!fs.existsSync(distPath)) {
+      console.error(`[SERVER ERROR] 'dist' folder not found at ${distPath}. Did you run 'npm run build'?`);
+    }
+    app.use(express.static(distPath));
     app.get("*", (req, res) => {
-      res.sendFile(path.join(__dirname, "dist", "index.html"));
+      res.sendFile(path.join(distPath, "index.html"));
     });
   }
 
+  console.log(`[SERVER] Ready to listen on port ${PORT}...`);
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`[SERVER] Success! Running on http://0.0.0.0:${PORT}`);
   });
 }
 
-startServer();
+startServer().catch(err => {
+  console.error("FATAL STARTUP ERROR:", err);
+  process.exit(1);
+});
