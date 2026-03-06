@@ -10,9 +10,16 @@ import fs from "fs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const db = new Database("census.db");
+// In Railway, we'll mount a volume at /app/data
+const DATA_DIR = process.env.NODE_ENV === 'production' ? '/app/data' : path.join(__dirname, 'data');
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+const DB_PATH = path.join(DATA_DIR, "census.db");
+const db = new Database(DB_PATH);
 const JWT_SECRET = process.env.JWT_SECRET || "super-secret-key-123";
-const BACKUP_DIR = path.join(__dirname, "backups");
+const BACKUP_DIR = path.join(DATA_DIR, "backups");
 
 // Automatic Backup System
 function performBackup() {
@@ -26,7 +33,7 @@ function performBackup() {
 
     // Only backup if not already backed up today
     if (!fs.existsSync(backupPath)) {
-      fs.copyFileSync("census.db", backupPath);
+      fs.copyFileSync(DB_PATH, backupPath);
       console.log(`[BACKUP] Database backed up to: ${backupPath}`);
 
       // Clean up old backups (keep last 30)
