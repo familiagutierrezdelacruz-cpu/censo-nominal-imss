@@ -225,6 +225,9 @@ export default function CensusDetail({ record, onBack, onEdit }: CensusDetailPro
           <DataItem label="Resultado II Nivel (Mater)" value={record.ref_mater_resultado} />
           <DataItem label="Ref. Urgencias" value={`${record.ref_urgencias_hospital} | Acudió: ${record.ref_urgencias_acudio === 'S' ? 'SÍ' : record.ref_urgencias_acudio === 'N' ? 'NO' : '---'}`} />
           <DataItem label="Resultado II Nivel (Urgencias)" value={record.ref_urgencias_resultado} />
+          <DataItem label="Derivación Plataforma Com." value={record.derivacion_plataforma_comunitaria === 'S' ? 'SÍ' : 'NO'} />
+          <DataItem label="Control por Partería Trad." value={record.control_parteria_tradicional === 'S' ? 'SÍ' : 'NO'} />
+          {record.control_parteria_tradicional === 'S' && <DataItem label="Nombre de la Partera" value={record.nombre_partera} />}
         </Section>
 
         {/* V. EVENTO OBSTÉTRICO */}

@@ -62,6 +62,9 @@ export default function CensusReport({ records, user, onBack }: CensusReportProp
       'Ref. Urgencias Hospital': record.ref_urgencias_hospital,
       'Ref. Urgencias Acudió': record.ref_urgencias_acudio,
       'Ref. Urgencias Resultado': record.ref_urgencias_resultado,
+      'Referencia Plataforma Com.': record.derivacion_plataforma_comunitaria,
+      'Control Partería Trad.': record.control_parteria_tradicional,
+      'Nombre de la Partera': record.nombre_partera,
       'Conclusión Embarazo': record.conclusion_embarazo,
       'SDG Nacimiento': record.sdg_nacimiento,
       'F. Atención Evento': formatDate(record.fecha_atencion_evento),
@@ -178,9 +181,12 @@ export default function CensusReport({ records, user, onBack }: CensusReportProp
                 <th className="p-4 border-r border-white/10">Ref. Mater Hosp.</th>
                 <th className="p-4 border-r border-white/10">Ref. Mater Acudió</th>
                 <th className="p-4 border-r border-white/10">Ref. Mater Res.</th>
-                <th className="p-4 border-r border-white/10">Ref. Urg. Hosp.</th>
-                <th className="p-4 border-r border-white/10">Ref. Urg. Acudió</th>
-                <th className="p-4 border-r border-white/10">Ref. Urg. Res.</th>
+                <th className="p-4 border-r border-white/10">Ref. Urgencias Hosp.</th>
+                <th className="p-4 border-r border-white/10">Ref. Urgencias Acudió</th>
+                <th className="p-4 border-r border-white/10">Ref. Urgencias Res.</th>
+                <th className="p-4 border-r border-white/10">Ref. Plat. Com.</th>
+                <th className="p-4 border-r border-white/10">Cont. Partería</th>
+                <th className="p-4 border-r border-white/10">Nombre Partera</th>
                 <th className="p-4 border-r border-white/10">Conclusión</th>
                 <th className="p-4 border-r border-white/10">SDG Nac.</th>
                 <th className="p-4 border-r border-white/10">F. Evento</th>
@@ -279,6 +285,9 @@ export default function CensusReport({ records, user, onBack }: CensusReportProp
                       <td className="p-4 border-r border-[#141414]/5">{record.ref_urgencias_hospital}</td>
                       <td className="p-4 border-r border-[#141414]/5 text-center">{record.ref_urgencias_acudio}</td>
                       <td className="p-4 border-r border-[#141414]/5">{record.ref_urgencias_resultado}</td>
+                      <td className="p-4 border-r border-[#141414]/5 text-center">{record.derivacion_plataforma_comunitaria}</td>
+                      <td className="p-4 border-r border-[#141414]/5 text-center">{record.control_parteria_tradicional}</td>
+                      <td className="p-4 border-r border-[#141414]/5">{record.nombre_partera}</td>
                       <td className="p-4 border-r border-[#141414]/5">{record.conclusion_embarazo}</td>
                       <td className="p-4 border-r border-[#141414]/5 text-center">{record.sdg_nacimiento}</td>
                       <td className="p-4 border-r border-[#141414]/5">{formatDate(record.fecha_atencion_evento)}</td>

@@ -116,6 +116,9 @@ export default function CensusForm({ onSave, onCancel, initialData, token }: Cen
     ref_urgencias_hospital: '',
     ref_urgencias_acudio: '',
     ref_urgencias_resultado: '',
+    derivacion_plataforma_comunitaria: 'N',
+    control_parteria_tradicional: 'N',
+    nombre_partera: '',
     conclusion_embarazo: '',
     sdg_nacimiento: 0,
     fecha_atencion_evento: '',
@@ -491,6 +494,15 @@ export default function CensusForm({ onSave, onCancel, initialData, token }: Cen
                 {renderInput("Hospital Urgencias", "ref_urgencias_hospital")}
                 {renderInput("¿Acudió?", "ref_urgencias_acudio", "text", false, [{ value: '', label: '---' }, { value: 'S', label: 'SÍ' }, { value: 'N', label: 'NO' }])}
                 {renderInput("Resultado Urgencias", "ref_urgencias_resultado")}
+              </div>
+
+              <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6 pt-6 border-t border-[#141414]/5">
+                <div className="md:col-span-3">
+                  <p className="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em] mb-4">Plataforma Comunitaria y Partería</p>
+                </div>
+                {renderInput("¿Derivada por Plataforma Com.?", "derivacion_plataforma_comunitaria", "text", false, [{ value: 'S', label: 'SÍ' }, { value: 'N', label: 'NO' }])}
+                {renderInput("¿Control por Partería Trad.?", "control_parteria_tradicional", "text", false, [{ value: 'S', label: 'SÍ' }, { value: 'N', label: 'NO' }])}
+                {formData.control_parteria_tradicional === 'S' && renderInput("Nombre de la Partera", "nombre_partera")}
               </div>
             </div>
           </section>

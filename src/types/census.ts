@@ -48,6 +48,9 @@ export interface CensusRecord {
   ref_urgencias_hospital: string;
   ref_urgencias_acudio: 'S' | 'N' | '';
   ref_urgencias_resultado: string;
+  derivacion_plataforma_comunitaria: 'S' | 'N' | '';
+  control_parteria_tradicional: 'S' | 'N' | '';
+  nombre_partera: string;
   conclusion_embarazo: 'Parto' | 'Cesárea' | 'Aborto' | '';
   sdg_nacimiento: number;
   fecha_atencion_evento: string;
