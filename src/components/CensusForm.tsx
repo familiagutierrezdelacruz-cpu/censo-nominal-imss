@@ -144,6 +144,8 @@ export default function CensusForm({ onSave, onCancel, initialData, token }: Cen
     medico_cedula: '',
     medico_atencion: '',
     nucleo_nombre: '',
+    fecha_usg_reciente: '',
+    conclusiones_usg: '',
   };
 
   const [formData, setFormData] = useState<Partial<CensusRecord>>({
@@ -462,6 +464,12 @@ export default function CensusForm({ onSave, onCancel, initialData, token }: Cen
               {renderInput("Calcio", "calcio", "text", false, [{ value: 'S', label: 'SÍ' }, { value: 'N', label: 'NO' }])}
               <div className="md:col-span-3">
                 {renderInput("Estado de Salud Actual", "estado_salud_actual")}
+              </div>
+              <div className="md:col-span-1">
+                {renderInput("Fecha de USG más reciente", "fecha_usg_reciente", "date")}
+              </div>
+              <div className="md:col-span-2">
+                {renderInput("Conclusiones del Ultrasonido", "conclusiones_usg")}
               </div>
             </div>
           </section>

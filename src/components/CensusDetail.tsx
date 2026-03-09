@@ -215,6 +215,8 @@ export default function CensusDetail({ record, onBack, onEdit }: CensusDetailPro
           <DataItem label="Micronutrimentos" value={`Ác. Fólico: ${record.acido_folico} | Hierro: ${record.fumarato_ferroso}`} />
           <DataItem label="Prevención Preeclampsia" value={`AAS: ${record.aas} | Calcio: ${record.calcio}`} />
           <DataItem label="Estado de Salud Actual" value={record.estado_salud_actual} />
+          <DataItem label="Fecha USG más reciente" value={formatDate(record.fecha_usg_reciente)} />
+          <DataItem label="Conclusiones del USG" value={record.conclusiones_usg} />
         </Section>
 
         {/* IV. REFERENCIAS */}

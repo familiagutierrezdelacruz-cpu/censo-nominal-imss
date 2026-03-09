@@ -53,6 +53,8 @@ export default function CensusReport({ records, user, onBack }: CensusReportProp
       'AAS': record.aas,
       'Calcio': record.calcio,
       'Estado Salud Actual': record.estado_salud_actual,
+      'F. USG más reciente': formatDate(record.fecha_usg_reciente),
+      'Conclusiones USG': record.conclusiones_usg,
       'Plan Seguridad': record.plan_seguridad,
       'Plan Seguridad Fecha': formatDate(record.plan_seguridad_fecha),
       'Plan Manejo': record.plan_manejo,
@@ -175,6 +177,8 @@ export default function CensusReport({ records, user, onBack }: CensusReportProp
                 <th className="p-4 border-r border-white/10">AAS</th>
                 <th className="p-4 border-r border-white/10">Calcio</th>
                 <th className="p-4 border-r border-white/10">Estado Salud</th>
+                <th className="p-4 border-r border-white/10">F. USG</th>
+                <th className="p-4 border-r border-white/10">Conclusiones USG</th>
                 <th className="p-4 border-r border-white/10">Plan Seg.</th>
                 <th className="p-4 border-r border-white/10">Plan Seg. F.</th>
                 <th className="p-4 border-r border-white/10">Plan Manejo</th>
@@ -276,6 +280,8 @@ export default function CensusReport({ records, user, onBack }: CensusReportProp
                       <td className="p-4 border-r border-[#141414]/5 text-center">{record.aas}</td>
                       <td className="p-4 border-r border-[#141414]/5 text-center">{record.calcio}</td>
                       <td className="p-4 border-r border-[#141414]/5">{record.estado_salud_actual}</td>
+                      <td className="p-4 border-r border-[#141414]/5">{formatDate(record.fecha_usg_reciente)}</td>
+                      <td className="p-4 border-r border-[#141414]/5">{record.conclusiones_usg}</td>
                       <td className="p-4 border-r border-[#141414]/5 text-center">{record.plan_seguridad}</td>
                       <td className="p-4 border-r border-[#141414]/5">{formatDate(record.plan_seguridad_fecha)}</td>
                       <td className="p-4 border-r border-[#141414]/5">{record.plan_manejo}</td>

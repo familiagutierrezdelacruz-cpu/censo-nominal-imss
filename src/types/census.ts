@@ -76,6 +76,8 @@ export interface CensusRecord {
   medico_cedula: string;
   medico_atencion: string;
   nucleo_nombre: string;
+  fecha_usg_reciente: string;
+  conclusiones_usg: string;
   is_historical?: number;
   created_at?: string;
   health_unit_id?: number;

@@ -215,6 +215,7 @@ const validColumns = [
   "mpf_aplicado", "motivo_rechazo_mpf", "diagnostico_especifico",
   "club_embarazadas", "seguimiento_ts", "fecha_actualizacion_ts",
   "fecha_ultima_consulta", "fecha_proxima_cita", "medico_nombre", "medico_cedula", "medico_atencion", "nucleo_nombre",
+  "fecha_usg_reciente", "conclusiones_usg",
   "is_historical"
 ];
 
