@@ -8,7 +8,8 @@ import {
   calculateTAM,
   calculatePuerperioDays,
   calculateDaysSinceUpdate,
-  formatDate
+  formatDate,
+  getVaccineAlerts
 } from '../utils/calculations';
 import {
   User,
@@ -159,9 +160,10 @@ export default function CensusDetail({ record, onBack, onEdit }: CensusDetailPro
           <DataItem label="Teléfono" value={record.telefono} />
           <DataItem label="Domicilio" value={record.domicilio} />
           <DataItem label="Tipo de Localidad" value={record.tipo_localidad} />
+          <DataItem label="Derechohabiencia" value={record.derechohabiencia} highlight />
           <DataItem label="Fecha de Nacimiento" value={formatDate(record.fecha_nacimiento)} />
           <DataItem label="Edad" value={`${age} años`} />
-          {age < 15 && (
+          {age < 18 && (
             <>
               <DataItem label="Notificar a MP" value="SÍ" alert />
               <DataItem label="Reporte a MP Realizado" value={record.reporte_mp === 'S' ? 'SÍ' : 'NO'} alert={record.reporte_mp === 'N'} />
@@ -206,6 +208,34 @@ export default function CensusDetail({ record, onBack, onEdit }: CensusDetailPro
         <Section title="III. Seguimiento Clínico y Laboratorio" icon={Activity}>
           <DataItem label="TA (TAS/TAD)" value={`${record.tas}/${record.tad}`} />
           <DataItem label="TAM" value={tam} highlight />
+          <div className="md:col-span-3 border-t border-[#141414]/5 pt-4 mt-2">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[10px] uppercase tracking-widest font-bold opacity-30">Medicina Preventiva (Biológicos)</p>
+              {record.condicion.startsWith('EMBARAZADA') && (
+                <div className="flex flex-wrap gap-2">
+                  {getVaccineAlerts(record.fum, record.td_fecha_1ra, record.td_fecha_2da, record.tdpa_fecha, record.influenza_fecha).map((alert, i) => (
+                    <div key={i} className="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-wider flex items-center gap-2">
+                      <AlertTriangle className="w-3 h-3" />
+                      {alert}
+                    </div>
+                  ))}
+                  {getVaccineAlerts(record.fum, record.td_fecha_1ra, record.td_fecha_2da, record.tdpa_fecha, record.influenza_fecha).length === 0 && (
+                    <div className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full text-[8px] font-bold uppercase tracking-wider flex items-center gap-2">
+                      <ShieldCheck className="w-3 h-3" />
+                      ESQUEMA AL DÍA
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <DataItem label="Td (1ra Dosis)" value={formatDate(record.td_fecha_1ra)} />
+              <DataItem label="Td (2da Dosis)" value={formatDate(record.td_fecha_2da)} />
+              <DataItem label="Td (3ra Dosis)" value={formatDate(record.td_fecha_3ra)} />
+              <DataItem label="Tdpa" value={formatDate(record.tdpa_fecha)} />
+              <DataItem label="Influenza" value={formatDate(record.influenza_fecha)} />
+            </div>
+          </div>
           <DataItem label="Tamiz DM (Glucosa)" value={record.tamiz_dm} />
           <DataItem label="BH (Hb)" value={record.bh_hb} />
           <DataItem label="Tipo de Sangre" value={`${record.tipo_sangre ?? '---'}${(record.rh === 'Positivo' ? '+' : record.rh === 'Negativo' ? '-' : '')}`} />
@@ -250,6 +280,7 @@ export default function CensusDetail({ record, onBack, onEdit }: CensusDetailPro
           <DataItem label="MPF Aplicado" value={record.mpf_aplicado} />
           <DataItem label="Motivo Rechazo" value={record.motivo_rechazo_mpf} />
           <DataItem label="Diagnóstico Específico" value={record.diagnostico_especifico} highlight />
+          <DataItem label="Plan de Manejo en el Puerperio" value={record.plan_manejo_puerperio} highlight />
         </Section>
 
         {/* VI. CIERRE */}
@@ -260,6 +291,9 @@ export default function CensusDetail({ record, onBack, onEdit }: CensusDetailPro
           <DataItem label="Última Consulta" value={formatDate(record.fecha_ultima_consulta)} />
           <DataItem label="Próxima Cita" value={formatDate(record.fecha_proxima_cita)} />
           <DataItem label="Días sin Actualizar" value={`${daysSinceUpdate} días`} alert={daysSinceUpdate > 30} />
+          <div className="md:col-span-3 border-t border-[#141414]/5 pt-4 mt-2">
+            <DataItem label="Observaciones generales" value={record.observaciones_generales} />
+          </div>
         </Section>
 
         {/* VII. DATOS DEL MÉDICO */}

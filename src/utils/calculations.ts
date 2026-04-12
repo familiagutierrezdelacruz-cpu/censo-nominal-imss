@@ -54,3 +54,63 @@ export const formatDate = (dateStr: string): string => {
   if (!isValid(date)) return dateStr;
   return format(date, 'dd/MM/yy');
 };
+
+export const getVaccineAlerts = (fum: string, td_fecha_1ra: string, td_fecha_2da: string, tdpa_fecha: string, influenza_fecha: string): string[] => {
+  const alerts: string[] = [];
+  if (!fum) return alerts;
+
+  const fumDate = parseISO(fum);
+  if (!isValid(fumDate)) return alerts;
+  const totalDays = differenceInDays(new Date(), fumDate);
+  const weeks = Math.floor(totalDays / 7);
+
+  // Influenza Alert (any trimester)
+  if (!influenza_fecha) {
+    alerts.push('Influenza pendiente');
+  }
+
+  // Td Alerts
+  if (!td_fecha_1ra) {
+    alerts.push('Td (1ra dosis) pendiente');
+  } else if (!td_fecha_2da) {
+    const d1 = parseISO(td_fecha_1ra);
+    if (isValid(d1) && differenceInDays(new Date(), d1) >= 28) { // 4 weeks
+      alerts.push('Td (2da dosis) pendiente (> 4 sem de la 1ra)');
+    }
+  }
+
+  // Tdpa Alert (20-32 SDG ideally, but > 20)
+  if (weeks >= 20 && !tdpa_fecha) {
+    alerts.push('Tdpa pendiente (requerido > 20 SDG)');
+  }
+
+  return alerts;
+};
+
+export const checkCriteria = (record: any, type: string): boolean => {
+  if (!record.condicion?.startsWith('EMBARAZADA')) return false;
+  
+  const today = new Date();
+  const fumDate = record.fum ? parseISO(record.fum) : null;
+  const weeks = fumDate && isValid(fumDate) ? Math.floor(differenceInDays(today, fumDate) / 7) : 0;
+  
+  switch (type) {
+    case 'sdg_41':
+      return weeks >= 41;
+      
+    case 'no_update':
+      return calculateDaysSinceUpdate(record.fecha_ultima_consulta) > 30;
+      
+    case 'missed_apt':
+      if (!record.fecha_proxima_cita) return false;
+      const aptDate = parseISO(record.fecha_proxima_cita);
+      // Missed if appointment date plus 1 day is before today (at midnight)
+      return isValid(aptDate) && aptDate < new Date(today.setHours(0,0,0,0));
+      
+    case 'cesarea_38':
+      return (record.cesareas > 0) && weeks >= 38;
+      
+    default:
+      return false;
+  }
+};

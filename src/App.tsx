@@ -21,7 +21,8 @@ import {
   Stethoscope,
   PlusCircle,
   List as ListIcon,
-  Upload
+  Upload,
+  Bell
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CensusRecord } from './types/census';
@@ -48,6 +49,7 @@ import ExcelImport from './components/ExcelImport';
 import { LayoutDashboard, Wifi, WifiOff, Cloud, RefreshCw as SyncIcon } from 'lucide-react';
 import { AuthResponse, User as UserType } from './types/census';
 import { savePendingAction, getPendingRecords, clearPendingRecord, cacheRecords, getCachedRecords } from './utils/db';
+import { subscribeToNotifications, checkNotificationPermission } from './utils/notifications';
 
 // Error Boundary Component
 class ErrorBoundary extends Component<any, any> {
@@ -111,6 +113,36 @@ export default function App() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [syncing, setSyncing] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+  }, []);
+
+  const handleSubscribe = async () => {
+    const permission = await checkNotificationPermission();
+    setNotificationPermission(permission);
+    if (permission === 'granted') {
+      const success = await subscribeToNotifications();
+      if (success) {
+        setErrorMsg('Notificaciones activadas correctamente.');
+      } else {
+        setErrorMsg('Error al activar notificaciones.');
+      }
+    }
+  };
+
+  // Hierarchical Filter state
+  const [hierarchyData, setHierarchyData] = useState<{
+    estados: any[],
+    regiones: any[],
+    zonas: any[]
+  }>({ estados: [], regiones: [], zonas: [] });
+  const [selectedEstado, setSelectedEstado] = useState<string>('');
+  const [selectedRegion, setSelectedRegion] = useState<string>('');
+  const [selectedZona, setSelectedZona] = useState<string>('');
 
   // Auth state
   const [token, setToken] = useState<string | null>(localStorage.getItem('census_token'));
@@ -125,6 +157,7 @@ export default function App() {
   useEffect(() => {
     if (token) {
       fetchRecords();
+      fetchHierarchy();
     }
 
     const handleOnline = () => setIsOnline(true);
@@ -132,6 +165,30 @@ export default function App() {
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
+
+    // Handle patientId from URL (push notification)
+    const urlParams = new URLSearchParams(window.location.search);
+    const patientId = urlParams.get('patientId');
+    if (patientId && token) {
+      // Find the record and open detail
+      const fetchSpecificPatient = async () => {
+        try {
+          const res = await fetch(`/api/census/${patientId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setSelectedRecord(data);
+            setView('detail');
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch (err) {
+          console.error('Error fetching patient from notification:', err);
+        }
+      };
+      fetchSpecificPatient();
+    }
 
     return () => {
       window.removeEventListener('online', handleOnline);
@@ -168,6 +225,27 @@ export default function App() {
     setView('dashboard');
   };
 
+  const fetchHierarchy = async () => {
+    if (!token || !isOnline) return;
+    try {
+      const [eRes, rRes, zRes] = await Promise.all([
+        fetch('/api/admin/estados', { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch('/api/admin/regiones', { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch('/api/admin/zonas', { headers: { 'Authorization': `Bearer ${token}` } })
+      ]);
+
+      if (eRes.ok && rRes.ok && zRes.ok) {
+        setHierarchyData({
+          estados: await eRes.json(),
+          regiones: await rRes.json(),
+          zonas: await zRes.json()
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching hierarchy metadata:', error);
+    }
+  };
+
   const fetchRecords = async () => {
     if (!token) return;
     setLoading(true);
@@ -190,26 +268,27 @@ export default function App() {
       const data: CensusRecord[] = await response.json();
       await cacheRecords(data);
 
-      // Sort records: 1. Unit (if admin), 2. Nucleo, 3. Name, 4. Risk
+      // Sort records: 1. Estado, 2. Region, 3. Zona, 4. Unit, 5. Nucleo, 6. Name, 7. Risk
       const sortedData = [...data].sort((a, b) => {
-        // 0. Unit (only if admin)
-        if (user?.role === 'ADMIN') {
-          const unitA = a.health_unit_id || 0;
-          const unitB = b.health_unit_id || 0;
-          if (unitA !== unitB) return unitA - unitB;
-        }
-
-        // 1. Nucleo
+        // 1. Estado
+        if (a.estado_name !== b.estado_name) return (a.estado_name || '').localeCompare(b.estado_name || '');
+        // 2. Region
+        if (a.region_name !== b.region_name) return (a.region_name || '').localeCompare(b.region_name || '');
+        // 3. Zona
+        if (a.zona_name !== b.zona_name) return (a.zona_name || '').localeCompare(b.zona_name || '');
+        // 4. Unit
+        if (a.health_unit_name !== b.health_unit_name) return (a.health_unit_name || '').localeCompare(b.health_unit_name || '');
+        // 5. Nucleo
         const nucleoA = a.nucleo_nombre || '';
         const nucleoB = b.nucleo_nombre || '';
         if (nucleoA !== nucleoB) return nucleoA.localeCompare(nucleoB);
 
-        // 2. Nombre
+        // 6. Nombre
         const nombreA = a.nombre || '';
         const nombreB = b.nombre || '';
         if (nombreA !== nombreB) return nombreA.localeCompare(nombreB);
 
-        // 3. Riesgo (Higher risk first)
+        // 7. Riesgo (Higher risk first)
         return (b.riesgo_obstetrico || 0) - (a.riesgo_obstetrico || 0);
       });
 
@@ -424,11 +503,18 @@ export default function App() {
 
   const filteredRecords = records.filter(r => {
     const search = searchTerm.toLowerCase();
-    return (
-      (r.nombre?.toLowerCase() || '').includes(search) ||
+
+    // Search filtering
+    const matchesSearch = (r.nombre?.toLowerCase() || '').includes(search) ||
       (r.folio?.toLowerCase() || '').includes(search) ||
-      (r.curp?.toLowerCase() || '').includes(search)
-    );
+      (r.curp?.toLowerCase() || '').includes(search);
+
+    // Hierarchical filtering
+    const matchesEstado = !selectedEstado || r.estado_id === parseInt(selectedEstado);
+    const matchesRegion = !selectedRegion || r.region_id === parseInt(selectedRegion);
+    const matchesZona = !selectedZona || r.zona_id === parseInt(selectedZona);
+
+    return matchesSearch && matchesEstado && matchesRegion && matchesZona;
   });
 
   if (!token) {
@@ -439,7 +525,7 @@ export default function App() {
     <ErrorBoundary>
       <div className="min-h-screen bg-[#E4E3E0] text-[#141414] font-sans selection:bg-[#141414] selection:text-[#E4E3E0]">
         {/* Sidebar / Navigation */}
-        <nav className="fixed top-0 left-0 h-full w-16 md:w-64 bg-[#141414] text-[#E4E3E0] z-50 flex flex-col border-r border-[#141414]">
+        <nav className="fixed top-0 left-0 h-full w-16 md:w-64 bg-[#141414] text-[#E4E3E0] z-50 flex flex-col border-r border-[#141414] no-print">
           <div className="p-4 md:p-6 mb-8">
             <div className="flex flex-col items-center gap-4">
               <div className="w-16 h-16 md:w-20 md:h-20 bg-white rounded-xl flex items-center justify-center p-2 shadow-sm overflow-hidden border border-white/10 group-hover:scale-105 transition-transform">
@@ -583,7 +669,7 @@ export default function App() {
 
         {/* Main Content */}
         <main className="ml-16 md:ml-64 p-4 md:p-8 min-h-screen">
-          <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 no-print">
             <div className="flex items-start gap-4">
               <div className="md:hidden w-12 h-12 bg-white rounded-lg p-1 shadow-sm">
                 <img src="/logo.png" alt="" className="w-full h-full object-contain" />
@@ -659,8 +745,105 @@ export default function App() {
                 <Search className="w-4 h-4" />
                 BUSCAR
               </button>
+
+              <button
+                onClick={handleSubscribe}
+                className={cn(
+                  "p-2.5 rounded-lg border transition-all shadow-sm",
+                  notificationPermission === 'granted'
+                    ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                    : "bg-white border-[#141414]/10 hover:bg-emerald-50 hover:text-emerald-600"
+                )}
+                title={notificationPermission === 'granted' ? "Notificaciones activadas" : "Activar notificaciones de seguimiento"}
+              >
+                <Bell className={cn("w-4 h-4", notificationPermission === 'granted' && "fill-current")} />
+              </button>
             </div>
           </header>
+
+          {/* Hierarchical Filter Bar */}
+          {(view === 'records' || view === 'historical') && user?.role !== 'UNIT_USER' && (
+            <div className="mb-6 flex flex-wrap gap-4 p-4 bg-white/50 backdrop-blur-sm rounded-2xl border border-[#141414]/10 shadow-sm animate-in fade-in slide-in-from-top-4">
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold opacity-40 mr-2">
+                <Filter className="w-3 h-3" />
+                Filtrar por:
+              </div>
+
+              {/* Estado Filter (only for ADMIN) */}
+              {user?.role === 'ADMIN' && (
+                <div className="flex flex-col gap-1">
+                  <select
+                    value={selectedEstado}
+                    onChange={(e) => {
+                      setSelectedEstado(e.target.value);
+                      setSelectedRegion('');
+                      setSelectedZona('');
+                    }}
+                    className="bg-white border border-[#141414]/10 rounded-lg py-1.5 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-[#005944]/10 transition-all"
+                  >
+                    <option value="">Todos los Estados</option>
+                    {hierarchyData.estados.map(e => (
+                      <option key={e.id} value={e.id}>{e.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Region Filter (for ADMIN and ESTATAL) */}
+              {(user?.role === 'ADMIN' || user?.role === 'ESTATAL') && (
+                <div className="flex flex-col gap-1">
+                  <select
+                    value={selectedRegion}
+                    onChange={(e) => {
+                      setSelectedRegion(e.target.value);
+                      setSelectedZona('');
+                    }}
+                    className="bg-white border border-[#141414]/10 rounded-lg py-1.5 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-[#005944]/10 transition-all"
+                  >
+                    <option value="">Todas las Regiones</option>
+                    {hierarchyData.regiones
+                      .filter(r => !selectedEstado || r.estado_id === parseInt(selectedEstado))
+                      .map(r => (
+                        <option key={r.id} value={r.id}>{r.nombre}</option>
+                      ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Zona Filter (for ADMIN, ESTATAL, and REGIONAL) */}
+              {(user?.role === 'ADMIN' || user?.role === 'ESTATAL' || user?.role === 'REGIONAL') && (
+                <div className="flex flex-col gap-1">
+                  <select
+                    value={selectedZona}
+                    onChange={(e) => setSelectedZona(e.target.value)}
+                    className="bg-white border border-[#141414]/10 rounded-lg py-1.5 px-3 text-xs focus:outline-none focus:ring-2 focus:ring-[#005944]/10 transition-all"
+                  >
+                    <option value="">Todas las Zonas</option>
+                    {hierarchyData.zonas
+                      .filter(z => !selectedRegion || z.region_id === parseInt(selectedRegion))
+                      .map(z => (
+                        <option key={z.id} value={z.id}>{z.nombre}</option>
+                      ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Clear Filters */}
+              {(selectedEstado || selectedRegion || selectedZona) && (
+                <button
+                  onClick={() => {
+                    setSelectedEstado('');
+                    setSelectedRegion('');
+                    setSelectedZona('');
+                  }}
+                  className="text-[10px] uppercase tracking-widest font-bold text-red-600 hover:text-red-700 transition-colors ml-auto flex items-center gap-1"
+                >
+                  <SyncIcon className="w-3 h-3" />
+                  Limpiar Filtros
+                </button>
+              )}
+            </div>
+          )}
 
           <AnimatePresence mode="wait">
             {view === 'dashboard' && (
@@ -670,7 +853,12 @@ export default function App() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
               >
-                <Dashboard records={records} user={user} />
+                <Dashboard 
+                  records={records} 
+                  user={user} 
+                  onUpdate={handleSave}
+                  onArchive={handleArchive}
+                />
               </motion.div>
             )}
 
@@ -775,7 +963,7 @@ export default function App() {
                 exit={{ opacity: 0, y: -10 }}
               >
                 <CensusReport
-                  records={records}
+                  records={filteredRecords.filter(r => Number(r.is_historical) !== 1)}
                   user={user}
                   onBack={() => setView('records')}
                 />

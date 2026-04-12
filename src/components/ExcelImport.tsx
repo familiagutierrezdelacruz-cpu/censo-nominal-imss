@@ -12,6 +12,7 @@ const COLUMN_MAPPING: Record<string, string[]> = {
   reporte_mp: ['reporte mp', 'mp', 'medicina preventiva'],
   folio_intransferible: ['folio intransferible', 'folio secretaria', 'folio federal'],
   tipo_localidad: ['tipo de localidad', 'localidad tipo', 'tipo localidad'],
+  derechohabiencia: ['derechohabiencia', 'seguro', 'afiliacion', 'derecho habiencia'],
   fecha_nacimiento: ['fecha de nacimiento', 'nacimiento', 'fecha nacimiento', 'f. nac'],
   condicion: ['condicion', 'condición', 'estado'],
   gestas: ['gestas', 'g', 'embarazos', 'número de gestas'],
@@ -26,6 +27,11 @@ const COLUMN_MAPPING: Record<string, string[]> = {
   riesgo_social: ['riesgo social', 'social'],
   tas: ['tas', 'tension sistolica', 'presion sistolica'],
   tad: ['tad', 'tension diastolica', 'presion diastolica'],
+  td_fecha_1ra: ['td 1ra', 'td 1ra dosis', 'fecha td 1ra'],
+  td_fecha_2da: ['td 2da', 'td 2da dosis', 'fecha td 2da'],
+  td_fecha_3ra: ['td 3ra', 'td 3ra dosis', 'fecha td 3ra'],
+  tdpa_fecha: ['tdpa', 'fecha tdpa'],
+  influenza_fecha: ['influenza', 'fecha influenza', 'gripe'],
   tamiz_dm: ['tamiz dm', 'glucosa', 'diabetes'],
   bh_hb: ['bh hb', 'hemoglobina', 'hb'],
   vih_resultado: ['vih resultado', 'vih'],
@@ -40,6 +46,7 @@ const COLUMN_MAPPING: Record<string, string[]> = {
   estado_salud_actual: ['estado de salud', 'estado salud'],
   medico_nombre: ['medico', 'médico', 'nombre del medico'],
   nucleo_nombre: ['nucleo', 'núcleo'],
+  observaciones_generales: ['observaciones generales', 'observaciones', 'notas', 'comentarios'],
 };
 
 const normalizeHeader = (header: string): string => {
@@ -134,7 +141,7 @@ export default function ExcelImport({ token, onImportSuccess, onClose }: ExcelIm
             let value = row[key];
 
             // Special handling for dates
-            if (['fum', 'fecha_nacimiento', 'fecha_ultima_cesarea', 'fecha_ultimo_aborto', 'salud_mental_fecha', 'vih_fecha', 'sifilis_fecha', 'ego_fecha', 'plan_seguridad_fecha', 'fecha_atencion_evento', 'tamiz_metabolico_fecha', 'tamiz_auditivo_fecha', 'fecha_actualizacion_ts', 'fecha_ultima_consulta', 'fecha_proxima_cita'].includes(normalizedKey)) {
+            if (['fum', 'fecha_nacimiento', 'fecha_ultima_cesarea', 'fecha_ultimo_aborto', 'salud_mental_fecha', 'vih_fecha', 'sifilis_fecha', 'ego_fecha', 'plan_seguridad_fecha', 'fecha_atencion_evento', 'tamiz_metabolico_fecha', 'tamiz_auditivo_fecha', 'fecha_actualizacion_ts', 'fecha_ultima_consulta', 'fecha_proxima_cita', 'td_fecha_1ra', 'td_fecha_2da', 'td_fecha_3ra', 'tdpa_fecha', 'influenza_fecha'].includes(normalizedKey)) {
               value = parseExcelDate(value);
             }
 
@@ -206,6 +213,7 @@ export default function ExcelImport({ token, onImportSuccess, onClose }: ExcelIm
         reporte_mp: 'N',
         folio_intransferible: '123456',
         tipo_localidad: 'SEDE',
+        derechohabiencia: 'IMSS BIENESTAR OPD',
         fecha_nacimiento: '1980-01-01',
         condicion: 'EMBARAZADA DE PRIMERA VEZ',
         gestas: 1,
@@ -222,6 +230,11 @@ export default function ExcelImport({ token, onImportSuccess, onClose }: ExcelIm
         salud_mental_puntaje: 0,
         tas: 110,
         tad: 70,
+        td_fecha_1ra: '',
+        td_fecha_2da: '',
+        td_fecha_3ra: '',
+        tdpa_fecha: '',
+        influenza_fecha: '',
         tamiz_dm: 'Normal',
         bh_hb: '12.5',
         vih_resultado: 'No Reactivo',

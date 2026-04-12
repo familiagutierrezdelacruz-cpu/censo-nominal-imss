@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Building2, UserPlus, Shield, Plus, Trash2, AlertCircle, CheckCircle2, Key, Users, Edit2, X, Save } from 'lucide-react';
-import { HealthUnit, User } from '../types/census';
+import { HealthUnit, User, Estado, Region, Zona } from '../types/census';
 import { cn } from '../utils/cn';
 
 interface AdminPanelProps {
   token: string;
 }
 
-type Tab = 'units' | 'users';
+type Tab = 'units' | 'users' | 'estados' | 'regiones' | 'zonas';
 
 export default function AdminPanel({ token }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<Tab>('units');
   const [units, setUnits] = useState<HealthUnit[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [estados, setEstados] = useState<Estado[]>([]);
+  const [regiones, setRegiones] = useState<Region[]>([]);
+  const [zonas, setZonas] = useState<Zona[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -22,8 +25,19 @@ export default function AdminPanel({ token }: AdminPanelProps) {
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
   // Form states
-  const [newUnit, setNewUnit] = useState({ nombre: '', clues: '' });
-  const [newUser, setNewUser] = useState({ username: '', password: '', role: 'UNIT_USER', health_unit_id: '' });
+  const [newUnit, setNewUnit] = useState({ nombre: '', clues: '', zona_id: '' });
+  const [newUser, setNewUser] = useState({
+    username: '',
+    password: '',
+    role: 'UNIT_USER',
+    health_unit_id: '',
+    estado_id: '',
+    region_id: '',
+    zona_id: ''
+  });
+  const [newEstado, setNewEstado] = useState({ nombre: '' });
+  const [newRegion, setNewRegion] = useState({ nombre: '', estado_id: '' });
+  const [newZona, setNewZona] = useState({ nombre: '', region_id: '' });
 
   useEffect(() => {
     fetchData();
@@ -31,8 +45,41 @@ export default function AdminPanel({ token }: AdminPanelProps) {
 
   const fetchData = async () => {
     setLoading(true);
-    await Promise.all([fetchUnits(), fetchUsers()]);
+    await Promise.all([
+      fetchUnits(),
+      fetchUsers(),
+      fetchEstados(),
+      fetchRegiones(),
+      fetchZonas()
+    ]);
     setLoading(false);
+  };
+
+  const fetchEstados = async () => {
+    try {
+      const response = await fetch('/api/admin/estados', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) setEstados(await response.json());
+    } catch (err) { setError('Error al cargar estados'); }
+  };
+
+  const fetchRegiones = async () => {
+    try {
+      const response = await fetch('/api/admin/regiones', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) setRegiones(await response.json());
+    } catch (err) { setError('Error al cargar regiones'); }
+  };
+
+  const fetchZonas = async () => {
+    try {
+      const response = await fetch('/api/admin/zonas', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) setZonas(await response.json());
+    } catch (err) { setError('Error al cargar zonas'); }
   };
 
   const fetchUnits = async () => {
@@ -44,9 +91,7 @@ export default function AdminPanel({ token }: AdminPanelProps) {
         const data = await response.json();
         setUnits(data);
       }
-    } catch (err) {
-      setError('Error al cargar unidades');
-    }
+    } catch (err) { setError('Error al cargar unidades'); }
   };
 
   const fetchUsers = async () => {
@@ -58,9 +103,7 @@ export default function AdminPanel({ token }: AdminPanelProps) {
         const data = await response.json();
         setUsers(data);
       }
-    } catch (err) {
-      setError('Error al cargar usuarios');
-    }
+    } catch (err) { setError('Error al cargar usuarios'); }
   };
 
   const handleCreateUnit = async (e: React.FormEvent) => {
@@ -74,19 +117,20 @@ export default function AdminPanel({ token }: AdminPanelProps) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(newUnit)
+        body: JSON.stringify({
+          ...newUnit,
+          zona_id: newUnit.zona_id ? parseInt(newUnit.zona_id) : null
+        })
       });
       if (response.ok) {
         setSuccess('Unidad creada exitosamente');
-        setNewUnit({ nombre: '', clues: '' });
+        setNewUnit({ nombre: '', clues: '', zona_id: '' });
         fetchUnits();
       } else {
         const data = await response.json();
         setError(data.error || 'Error al crear unidad');
       }
-    } catch (err) {
-      setError('Error de conexión');
-    }
+    } catch (err) { setError('Error de conexión'); }
   };
 
   const handleUpdateUnit = async (e: React.FormEvent) => {
@@ -106,9 +150,7 @@ export default function AdminPanel({ token }: AdminPanelProps) {
         setEditingUnit(null);
         fetchUnits();
       }
-    } catch (err) {
-      setError('Error al actualizar');
-    }
+    } catch (err) { setError('Error al actualizar'); }
   };
 
   const handleDeleteUnit = async (id: number) => {
@@ -125,9 +167,7 @@ export default function AdminPanel({ token }: AdminPanelProps) {
         const data = await response.json();
         setError(data.error || 'No se pudo eliminar');
       }
-    } catch (err) {
-      setError('Error de conexión');
-    }
+    } catch (err) { setError('Error de conexión'); }
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -143,20 +183,69 @@ export default function AdminPanel({ token }: AdminPanelProps) {
         },
         body: JSON.stringify({
           ...newUser,
-          health_unit_id: newUser.role === 'ADMIN' ? null : parseInt(newUser.health_unit_id)
+          health_unit_id: newUser.role === 'UNIT_USER' ? parseInt(newUser.health_unit_id) : null,
+          estado_id: ['ESTATAL', 'REGIONAL', 'ZONAL', 'UNIT_USER'].includes(newUser.role) ? parseInt(newUser.estado_id) : null,
+          region_id: ['REGIONAL', 'ZONAL', 'UNIT_USER'].includes(newUser.role) ? parseInt(newUser.region_id) : null,
+          zona_id: ['ZONAL', 'UNIT_USER'].includes(newUser.role) ? parseInt(newUser.zona_id) : null
         })
       });
       if (response.ok) {
         setSuccess('Usuario creado exitosamente');
-        setNewUser({ username: '', password: '', role: 'UNIT_USER', health_unit_id: '' });
+        setNewUser({ username: '', password: '', role: 'UNIT_USER', health_unit_id: '', estado_id: '', region_id: '', zona_id: '' });
         fetchUsers();
       } else {
         const data = await response.json();
         setError(data.error || 'Error al crear usuario');
       }
-    } catch (err) {
-      setError('Error de conexión');
-    }
+    } catch (err) { setError('Error de conexión'); }
+  };
+
+  const handleCreateEstado = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/admin/estados', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(newEstado)
+      });
+      if (response.ok) {
+        setSuccess('Estado creado');
+        setNewEstado({ nombre: '' });
+        fetchEstados();
+      }
+    } catch (err) { setError('Error al crear estado'); }
+  };
+
+  const handleCreateRegion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/admin/regiones', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ ...newRegion, estado_id: parseInt(newRegion.estado_id) })
+      });
+      if (response.ok) {
+        setSuccess('Región creada');
+        setNewRegion({ nombre: '', estado_id: '' });
+        fetchRegiones();
+      }
+    } catch (err) { setError('Error al crear región'); }
+  };
+
+  const handleCreateZona = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('/api/admin/zonas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ ...newZona, region_id: parseInt(newZona.region_id) })
+      });
+      if (response.ok) {
+        setSuccess('Zona creada');
+        setNewZona({ nombre: '', region_id: '' });
+        fetchZonas();
+      }
+    } catch (err) { setError('Error al crear zona'); }
   };
 
   const handleUpdateUser = async (e: React.FormEvent) => {
@@ -169,16 +258,20 @@ export default function AdminPanel({ token }: AdminPanelProps) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(editingUser)
+        body: JSON.stringify({
+          ...editingUser,
+          health_unit_id: editingUser.role === 'UNIT_USER' ? editingUser.health_unit_id : null,
+          estado_id: ['ESTATAL', 'REGIONAL', 'ZONAL', 'UNIT_USER'].includes(editingUser.role) ? editingUser.estado_id : null,
+          region_id: ['REGIONAL', 'ZONAL', 'UNIT_USER'].includes(editingUser.role) ? editingUser.region_id : null,
+          zona_id: ['ZONAL', 'UNIT_USER'].includes(editingUser.role) ? editingUser.zona_id : null
+        })
       });
       if (response.ok) {
         setSuccess('Usuario actualizado');
         setEditingUser(null);
         fetchUsers();
       }
-    } catch (err) {
-      setError('Error al actualizar');
-    }
+    } catch (err) { setError('Error al actualizar'); }
   };
 
   const handleDeleteUser = async (id: number) => {
@@ -195,34 +288,31 @@ export default function AdminPanel({ token }: AdminPanelProps) {
         const data = await response.json();
         setError(data.error || 'No se pudo eliminar');
       }
-    } catch (err) {
-      setError('Error de conexión');
-    }
+    } catch (err) { setError('Error de conexión'); }
   };
+
+  if (loading) {
+    return <div className="p-12 text-center font-bold animate-pulse">Cargando panel de control...</div>;
+  }
 
   return (
     <div className="space-y-6">
       {/* Tabs */}
-      <div className="flex gap-2 p-1 bg-[#141414]/5 rounded-xl w-fit">
-        <button
-          onClick={() => setActiveTab('units')}
-          className={cn(
-            "px-6 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center gap-2",
-            activeTab === 'units' ? "bg-[#141414] text-[#E4E3E0] shadow-lg" : "text-[#141414]/40 hover:text-[#141414]"
-          )}
-        >
-          <Building2 className="w-4 h-4" />
-          UNIDADES DE SALUD
+      <div className="flex flex-wrap gap-2 p-1 bg-[#141414]/5 rounded-xl w-fit">
+        <button onClick={() => setActiveTab('units')} className={cn("px-6 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center gap-2", activeTab === 'units' ? "bg-[#141414] text-[#E4E3E0] shadow-lg" : "text-[#141414]/40 hover:text-[#141414]")}>
+          <Building2 className="w-4 h-4" /> UNIDADES
         </button>
-        <button
-          onClick={() => setActiveTab('users')}
-          className={cn(
-            "px-6 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center gap-2",
-            activeTab === 'users' ? "bg-[#141414] text-[#E4E3E0] shadow-lg" : "text-[#141414]/40 hover:text-[#141414]"
-          )}
-        >
-          <Users className="w-4 h-4" />
-          USUARIOS Y ACCESOS
+        <button onClick={() => setActiveTab('users')} className={cn("px-6 py-2.5 rounded-lg text-sm font-bold transition-all flex items-center gap-2", activeTab === 'users' ? "bg-[#141414] text-[#E4E3E0] shadow-lg" : "text-[#141414]/40 hover:text-[#141414]")}>
+          <Users className="w-4 h-4" /> USUARIOS
+        </button>
+        <button onClick={() => setActiveTab('estados')} className={cn("px-4 py-2 rounded-lg text-[10px] font-bold transition-all", activeTab === 'estados' ? "bg-[#141414] text-[#E4E3E0]" : "text-[#141414]/40")}>
+          ESTADOS
+        </button>
+        <button onClick={() => setActiveTab('regiones')} className={cn("px-4 py-2 rounded-lg text-[10px] font-bold transition-all", activeTab === 'regiones' ? "bg-[#141414] text-[#E4E3E0]" : "text-[#141414]/40")}>
+          REGIONES
+        </button>
+        <button onClick={() => setActiveTab('zonas')} className={cn("px-4 py-2 rounded-lg text-[10px] font-bold transition-all", activeTab === 'zonas' ? "bg-[#141414] text-[#E4E3E0]" : "text-[#141414]/40")}>
+          ZONAS
         </button>
       </div>
 
@@ -270,6 +360,20 @@ export default function AdminPanel({ token }: AdminPanelProps) {
                     onChange={(e) => editingUnit ? setEditingUnit({ ...editingUnit, clues: e.target.value }) : setNewUnit({ ...newUnit, clues: e.target.value })}
                   />
                 </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Zona (Jerarquía)</label>
+                  <select
+                    required
+                    className="w-full bg-[#E4E3E0]/30 border border-[#141414]/10 rounded-xl py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#141414]/5 transition-all text-xs font-bold"
+                    value={editingUnit ? (editingUnit.zona_id || '') : newUnit.zona_id}
+                    onChange={(e) => editingUnit ? setEditingUnit({ ...editingUnit, zona_id: parseInt(e.target.value) }) : setNewUnit({ ...newUnit, zona_id: e.target.value })}
+                  >
+                    <option value="">Seleccionar Zona...</option>
+                    {zonas.map(z => (
+                      <option key={z.id} value={z.id}>{z.nombre} ({z.region_nombre})</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="flex gap-2">
                   <button type="submit" className="flex-1 bg-[#141414] text-[#E4E3E0] py-3 rounded-xl font-bold text-xs tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-2">
                     {editingUnit ? <Save className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
@@ -283,7 +387,7 @@ export default function AdminPanel({ token }: AdminPanelProps) {
                 </div>
               </form>
             </section>
-          ) : (
+          ) : activeTab === 'users' ? (
             <section className="bg-white border border-[#141414]/10 rounded-2xl p-6 shadow-sm sticky top-8">
               <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
                 <UserPlus className="w-5 h-5" />
@@ -312,32 +416,87 @@ export default function AdminPanel({ token }: AdminPanelProps) {
                     onChange={(e) => editingUser ? setEditingUser({ ...editingUser, password: e.target.value }) : setNewUser({ ...newUser, password: e.target.value })}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Rol</label>
+                    <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Rol / Nivel de Acceso</label>
                     <select
                       className="w-full bg-[#E4E3E0]/30 border border-[#141414]/10 rounded-xl py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#141414]/5 transition-all text-xs font-bold"
                       value={editingUser ? editingUser.role : newUser.role}
                       onChange={(e) => editingUser ? setEditingUser({ ...editingUser, role: e.target.value as any }) : setNewUser({ ...newUser, role: e.target.value as any })}
                     >
-                      <option value="UNIT_USER">UNIT_USER</option>
-                      <option value="ADMIN">ADMIN</option>
+                      <option value="UNIT_USER">LOCAL (Unidad Específica)</option>
+                      <option value="ZONAL">ZONAL (Varias Unidades)</option>
+                      <option value="REGIONAL">REGIONAL</option>
+                      <option value="ESTATAL">ESTATAL</option>
+                      <option value="ADMIN">NACIONAL (Administrador)</option>
                     </select>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Unidad</label>
-                    <select
-                      disabled={(editingUser ? editingUser.role : newUser.role) === 'ADMIN'}
-                      className="w-full bg-[#E4E3E0]/30 border border-[#141414]/10 rounded-xl py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#141414]/5 transition-all text-xs font-bold disabled:opacity-20"
-                      value={editingUser ? (editingUser.health_unit_id || '') : newUser.health_unit_id}
-                      onChange={(e) => editingUser ? setEditingUser({ ...editingUser, health_unit_id: e.target.value ? parseInt(e.target.value) : null }) : setNewUser({ ...newUser, health_unit_id: e.target.value })}
-                    >
-                      <option value="">Ninguna...</option>
-                      {units.map(u => (
-                        <option key={u.id} value={u.id}>{u.nombre}</option>
-                      ))}
-                    </select>
-                  </div>
+
+                  {['ESTATAL', 'REGIONAL', 'ZONAL', 'UNIT_USER'].includes(editingUser?.role || newUser.role) && (
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Estado</label>
+                      <select
+                        required
+                        className="w-full bg-[#E4E3E0]/30 border border-[#141414]/10 rounded-xl py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#141414]/5 transition-all text-xs font-bold"
+                        value={editingUser ? (editingUser.estado_id || '') : newUser.estado_id}
+                        onChange={(e) => editingUser ? setEditingUser({ ...editingUser, estado_id: parseInt(e.target.value) }) : setNewUser({ ...newUser, estado_id: e.target.value })}
+                      >
+                        <option value="">Seleccionar Estado...</option>
+                        {estados.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+                      </select>
+                    </div>
+                  )}
+
+                  {['REGIONAL', 'ZONAL', 'UNIT_USER'].includes(editingUser?.role || newUser.role) && (
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Región</label>
+                      <select
+                        required
+                        className="w-full bg-[#E4E3E0]/30 border border-[#141414]/10 rounded-xl py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#141414]/5 transition-all text-xs font-bold"
+                        value={editingUser ? (editingUser.region_id || '') : newUser.region_id}
+                        onChange={(e) => editingUser ? setEditingUser({ ...editingUser, region_id: parseInt(e.target.value) }) : setNewUser({ ...newUser, region_id: e.target.value })}
+                      >
+                        <option value="">Seleccionar Región...</option>
+                        {regiones.filter(r => r.estado_id === parseInt((editingUser?.estado_id || newUser.estado_id) as any)).map(r => (
+                          <option key={r.id} value={r.id}>{r.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {['ZONAL', 'UNIT_USER'].includes(editingUser?.role || newUser.role) && (
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Zona</label>
+                      <select
+                        required
+                        className="w-full bg-[#E4E3E0]/33 border border-[#141414]/10 rounded-xl py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#141414]/5 transition-all text-xs font-bold"
+                        value={editingUser ? (editingUser.zona_id || '') : newUser.zona_id}
+                        onChange={(e) => editingUser ? setEditingUser({ ...editingUser, zona_id: parseInt(e.target.value) }) : setNewUser({ ...newUser, zona_id: e.target.value })}
+                      >
+                        <option value="">Seleccionar Zona...</option>
+                        {zonas.filter(z => z.region_id === parseInt((editingUser?.region_id || newUser.region_id) as any)).map(z => (
+                          <option key={z.id} value={z.id}>{z.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {['UNIT_USER'].includes(editingUser?.role || newUser.role) && (
+                    <div className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Unidad de Salud</label>
+                      <select
+                        required
+                        className="w-full bg-[#E4E3E0]/30 border border-[#141414]/10 rounded-xl py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-[#141414]/5 transition-all text-xs font-bold"
+                        value={editingUser ? (editingUser.health_unit_id || '') : newUser.health_unit_id}
+                        onChange={(e) => editingUser ? setEditingUser({ ...editingUser, health_unit_id: parseInt(e.target.value) }) : setNewUser({ ...newUser, health_unit_id: e.target.value })}
+                      >
+                        <option value="">Seleccionar Unidad...</option>
+                        {units.filter(u => u.zona_id === parseInt((editingUser?.zona_id || newUser.zona_id) as any)).map(u => (
+                          <option key={u.id} value={u.id}>{u.nombre}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <button type="submit" className="flex-1 bg-[#141414] text-[#E4E3E0] py-3 rounded-xl font-bold text-xs tracking-widest hover:opacity-90 transition-all flex items-center justify-center gap-2">
@@ -352,6 +511,59 @@ export default function AdminPanel({ token }: AdminPanelProps) {
                 </div>
               </form>
             </section>
+          ) : activeTab === 'estados' ? (
+            <section className="bg-white border border-[#141414]/10 rounded-2xl p-6 shadow-sm sticky top-8">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <Plus className="w-5 h-5" /> Nuevo Estado
+              </h3>
+              <form onSubmit={handleCreateEstado} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Nombre</label>
+                  <input type="text" required className="w-full bg-[#E4E3E0]/30 border border-[#141414]/10 rounded-xl py-2.5 px-4 text-sm font-bold" value={newEstado.nombre} onChange={e => setNewEstado({ ...newEstado, nombre: e.target.value })} />
+                </div>
+                <button type="submit" className="w-full bg-[#141414] text-[#E4E3E0] py-3 rounded-xl font-bold text-xs tracking-widest hover:opacity-90">REGISTRAR ESTADO</button>
+              </form>
+            </section>
+          ) : activeTab === 'regiones' ? (
+            <section className="bg-white border border-[#141414]/10 rounded-2xl p-6 shadow-sm sticky top-8">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <Plus className="w-5 h-5" /> Nueva Región
+              </h3>
+              <form onSubmit={handleCreateRegion} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Estado</label>
+                  <select required className="w-full bg-[#E4E3E0]/30 border border-[#141414]/10 rounded-xl py-2.5 px-4 text-xs font-bold" value={newRegion.estado_id} onChange={e => setNewRegion({ ...newRegion, estado_id: e.target.value })}>
+                    <option value="">Seleccionar Estado...</option>
+                    {estados.map(e => <option key={e.id} value={e.id}>{e.nombre}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Nombre de Región</label>
+                  <input type="text" required className="w-full bg-[#E4E3E0]/30 border border-[#141414]/10 rounded-xl py-2.5 px-4 text-sm font-bold" value={newRegion.nombre} onChange={e => setNewRegion({ ...newRegion, nombre: e.target.value })} />
+                </div>
+                <button type="submit" className="w-full bg-[#141414] text-[#E4E3E0] py-3 rounded-xl font-bold text-xs tracking-widest hover:opacity-90">REGISTRAR REGIÓN</button>
+              </form>
+            </section>
+          ) : (
+            <section className="bg-white border border-[#141414]/10 rounded-2xl p-6 shadow-sm sticky top-8">
+              <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+                <Plus className="w-5 h-5" /> Nueva Zona
+              </h3>
+              <form onSubmit={handleCreateZona} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Región</label>
+                  <select required className="w-full bg-[#E4E3E0]/30 border border-[#141414]/10 rounded-xl py-2.5 px-4 text-xs font-bold" value={newZona.region_id} onChange={e => setNewZona({ ...newZona, region_id: e.target.value })}>
+                    <option value="">Seleccionar Región...</option>
+                    {regiones.map(r => <option key={r.id} value={r.id}>{r.nombre} ({r.estado_nombre})</option>)}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Nombre de Zona</label>
+                  <input type="text" required className="w-full bg-[#E4E3E0]/30 border border-[#141414]/10 rounded-xl py-2.5 px-4 text-sm font-bold" value={newZona.nombre} onChange={e => setNewZona({ ...newZona, nombre: e.target.value })} />
+                </div>
+                <button type="submit" className="w-full bg-[#141414] text-[#E4E3E0] py-3 rounded-xl font-bold text-xs tracking-widest hover:opacity-90">REGISTRAR ZONA</button>
+              </form>
+            </section>
           )}
         </div>
 
@@ -360,7 +572,10 @@ export default function AdminPanel({ token }: AdminPanelProps) {
           <div className="bg-white border border-[#141414]/10 rounded-2xl overflow-hidden shadow-sm">
             <div className="p-6 border-b border-[#141414]/5 bg-gray-50/50">
               <h3 className="font-serif italic text-xl">
-                {activeTab === 'units' ? 'Inventario de Unidades' : 'Lista de Usuarios'}
+                {activeTab === 'units' ? 'Inventario de Unidades' :
+                  activeTab === 'users' ? 'Lista de Usuarios' :
+                    activeTab === 'estados' ? 'Estados de Salud Nacional' :
+                      activeTab === 'regiones' ? 'Regiones Sanitarias' : 'Zonas y Jurisdicciones'}
               </h3>
             </div>
 
@@ -391,7 +606,7 @@ export default function AdminPanel({ token }: AdminPanelProps) {
                     </div>
                   ))
                 )
-              ) : (
+              ) : activeTab === 'users' ? (
                 users.length === 0 ? (
                   <div className="p-12 text-center opacity-30 italic">No hay usuarios registrados</div>
                 ) : (
@@ -407,10 +622,10 @@ export default function AdminPanel({ token }: AdminPanelProps) {
                         <div>
                           <p className="font-bold text-sm flex items-center gap-2">
                             {u.username}
-                            {u.role === 'ADMIN' && <Shield className="w-3 h-3 text-amber-500" />}
+                            <span className="text-[8px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">{u.role}</span>
                           </p>
                           <p className="text-[10px] font-bold opacity-40 uppercase tracking-widest truncate max-w-[200px]">
-                            {u.health_unit_name || 'Sin Unidad Asignada'}
+                            {u.health_unit_name || 'Gestión Administrativa'}
                           </p>
                         </div>
                       </div>
@@ -425,6 +640,31 @@ export default function AdminPanel({ token }: AdminPanelProps) {
                     </div>
                   ))
                 )
+              ) : activeTab === 'estados' ? (
+                estados.map(e => (
+                  <div key={e.id} className="p-4 flex justify-between items-center hover:bg-[#141414]/[0.02]">
+                    <span className="font-bold text-sm tracking-tight">{e.nombre}</span>
+                    <span className="text-[10px] opacity-40 font-bold">ID: {e.id}</span>
+                  </div>
+                ))
+              ) : activeTab === 'regiones' ? (
+                regiones.map(r => (
+                  <div key={r.id} className="p-4 flex justify-between items-center hover:bg-[#141414]/[0.02]">
+                    <div>
+                      <p className="font-bold text-sm tracking-tight">{r.nombre}</p>
+                      <p className="text-[10px] opacity-40 font-bold uppercase">{r.estado_nombre}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                zonas.map(z => (
+                  <div key={z.id} className="p-4 flex justify-between items-center hover:bg-[#141414]/[0.02]">
+                    <div>
+                      <p className="font-bold text-sm tracking-tight">{z.nombre}</p>
+                      <p className="text-[10px] opacity-40 font-bold uppercase">{z.region_nombre}</p>
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           </div>

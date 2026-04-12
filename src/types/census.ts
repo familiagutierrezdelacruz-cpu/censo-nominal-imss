@@ -8,6 +8,7 @@ export interface CensusRecord {
   reporte_mp: 'S' | 'N' | '';
   folio_intransferible: string;
   tipo_localidad: 'SEDE' | 'LAI';
+  derechohabiencia: 'IMSS BIENESTAR OPD' | 'IMSS BIENESTAR PROGRAMA' | 'IMSS ORDINARIO' | 'ISSSTE' | 'ISSSTECH' | 'SEDENA' | 'OTRO' | '';
   fecha_nacimiento: string;
   condicion: 'EMBARAZADA DE PRIMERA VEZ' | 'EMBARAZADA SUBSECUENTE' | 'PUERPERA DE PRIMERA VEZ' | 'PUERPERA SUBSECUENTE';
   gestas: number;
@@ -24,6 +25,11 @@ export interface CensusRecord {
   salud_mental_puntaje: number;
   tas: number;
   tad: number;
+  td_fecha_1ra: string;
+  td_fecha_2da: string;
+  td_fecha_3ra: string;
+  tdpa_fecha: string;
+  influenza_fecha: string;
   tamiz_dm: string;
   bh_hb: string;
   tipo_sangre: 'A' | 'B' | 'AB' | 'O' | '';
@@ -67,6 +73,7 @@ export interface CensusRecord {
   mpf_aplicado: string;
   motivo_rechazo_mpf: string;
   diagnostico_especifico: string;
+  plan_manejo_puerperio: string;
   club_embarazadas: 'S' | 'N';
   seguimiento_ts: string;
   fecha_actualizacion_ts: string;
@@ -78,25 +85,60 @@ export interface CensusRecord {
   nucleo_nombre: string;
   fecha_usg_reciente: string;
   conclusiones_usg: string;
+  observaciones_generales?: string;
   is_historical?: number;
   created_at?: string;
   health_unit_id?: number;
   health_unit_name?: string;
+  health_unit_clues?: string;
+  zona_id?: number;
+  zona_name?: string;
+  region_id?: number;
+  region_name?: string;
+  estado_id?: number;
+  estado_name?: string;
 }
 
 export interface User {
   id: number;
   username: string;
-  role: 'ADMIN' | 'UNIT_USER';
+  role: 'ADMIN' | 'ESTATAL' | 'REGIONAL' | 'ZONAL' | 'UNIT_USER';
   health_unit_id: number | null;
   health_unit_name?: string;
+  health_unit_clues?: string;
+  estado_id: number | null;
+  estado_name?: string;
+  region_id: number | null;
+  region_name?: string;
+  zona_id: number | null;
+  zona_name?: string;
 }
 
 export interface HealthUnit {
   id: number;
   nombre: string;
   clues: string;
+  zona_id: number | null;
   created_at: string;
+}
+
+export interface Estado {
+  id: number;
+  nombre: string;
+}
+
+export interface Region {
+  id: number;
+  nombre: string;
+  estado_id: number;
+  estado_nombre?: string;
+}
+
+export interface Zona {
+  id: number;
+  nombre: string;
+  region_id: number;
+  region_nombre?: string;
 }
 
 export interface AuthResponse {

@@ -5,7 +5,8 @@ import {
   calculateSDG,
   calculateFPP,
   calculateTAM,
-  calculatePuerperioDays
+  calculatePuerperioDays,
+  getVaccineAlerts
 } from '../utils/calculations';
 import { Save, X, AlertCircle, User, Calendar, Activity, Stethoscope } from 'lucide-react';
 import { cn } from '../utils/cn';
@@ -37,6 +38,15 @@ const InputGroup = ({ label, name, type = "text", required = false, options = nu
           <option key={opt.value} value={opt.value}>{opt.label}</option>
         ))}
       </select>
+    ) : type === 'textarea' ? (
+      <textarea
+        name={name}
+        placeholder={placeholder}
+        value={value as any}
+        onChange={onChange}
+        rows={3}
+        className="w-full bg-transparent border-b-2 border-[#141414]/10 px-0 py-1 text-sm font-mono font-bold focus:outline-none focus:border-[#141414] transition-all placeholder:font-normal placeholder:opacity-30 resize-none"
+      />
     ) : (
       <input
         type={type}
@@ -77,6 +87,7 @@ export default function CensusForm({ onSave, onCancel, initialData, token }: Cen
     reporte_mp: '',
     folio_intransferible: '',
     tipo_localidad: 'SEDE',
+    derechohabiencia: '',
     condicion: 'EMBARAZADA DE PRIMERA VEZ',
     gestas: 0,
     cesareas: 0,
@@ -92,6 +103,11 @@ export default function CensusForm({ onSave, onCancel, initialData, token }: Cen
     salud_mental_puntaje: 0,
     tas: 110,
     tad: 70,
+    td_fecha_1ra: '',
+    td_fecha_2da: '',
+    td_fecha_3ra: '',
+    tdpa_fecha: '',
+    influenza_fecha: '',
     tamiz_dm: '',
     bh_hb: '',
     tipo_sangre: '',
@@ -135,6 +151,7 @@ export default function CensusForm({ onSave, onCancel, initialData, token }: Cen
     mpf_aplicado: '',
     motivo_rechazo_mpf: '',
     diagnostico_especifico: '',
+    plan_manejo_puerperio: '',
     club_embarazadas: 'N',
     seguimiento_ts: '',
     fecha_actualizacion_ts: '',
@@ -146,6 +163,7 @@ export default function CensusForm({ onSave, onCancel, initialData, token }: Cen
     nucleo_nombre: '',
     fecha_usg_reciente: '',
     conclusiones_usg: '',
+    observaciones_generales: '',
   };
 
   const [formData, setFormData] = useState<Partial<CensusRecord>>({
@@ -349,13 +367,23 @@ export default function CensusForm({ onSave, onCancel, initialData, token }: Cen
               {renderInput("Teléfono", "telefono")}
               {renderInput("Domicilio", "domicilio")}
               {renderInput("Tipo de Localidad", "tipo_localidad", "text", false, [{ value: 'SEDE', label: 'SEDE' }, { value: 'LAI', label: 'LAI' }])}
+              {renderInput("Derechohabiencia", "derechohabiencia", "text", false, [
+                { value: '', label: 'Seleccionar...' },
+                { value: 'IMSS BIENESTAR OPD', label: 'IMSS BIENESTAR OPD' },
+                { value: 'IMSS BIENESTAR PROGRAMA', label: 'IMSS BIENESTAR PROGRAMA' },
+                { value: 'IMSS ORDINARIO', label: 'IMSS ORDINARIO' },
+                { value: 'ISSSTE', label: 'ISSSTE' },
+                { value: 'ISSSTECH', label: 'ISSSTECH' },
+                { value: 'SEDENA', label: 'SEDENA' },
+                { value: 'OTRO', label: 'OTRO' }
+              ])}
               {renderInput("Fecha de Nacimiento", "fecha_nacimiento", "date", true)}
               <div className="space-y-1.5">
                 <span className="text-[10px] uppercase tracking-[0.15em] text-[#141414]/40 font-bold block">Edad</span>
-                <span className={cn("text-sm font-mono font-bold block py-1 border-b-2 border-transparent", age < 15 && "text-red-600")}>{age} años</span>
+                <span className={cn("text-sm font-mono font-bold block py-1 border-b-2 border-transparent", age < 18 && "text-red-600")}>{age} años</span>
               </div>
 
-              {age > 0 && age < 15 && (
+              {age > 0 && age < 18 && (
                 <>
                   <div className="space-y-1.5">
                     <span className="text-[10px] uppercase tracking-[0.15em] text-red-500 font-bold block">Notificar a MP</span>
@@ -438,8 +466,46 @@ export default function CensusForm({ onSave, onCancel, initialData, token }: Cen
                 <span className="text-[10px] uppercase tracking-[0.15em] text-[#141414]/40 font-bold block">TAM (Calculado)</span>
                 <span className="text-sm font-mono font-bold block py-1 border-b-2 border-transparent">{tam} mmHg</span>
               </div>
-              {renderInput("Tamiz DM (Glucosa)", "tamiz_dm")}
-              {renderInput("BH (Hb)", "bh_hb")}
+
+              <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6 pt-6 border-t border-[#141414]/5">
+                <div className="md:col-span-3">
+                  <p className="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em] mb-4">Medicina Preventiva (Biológicos)</p>
+                </div>
+
+                {formData.condicion?.startsWith('EMBARAZADA') && (
+                  <div className="md:col-span-3 mb-4">
+                    {getVaccineAlerts(formData.fum || '', formData.td_fecha_1ra || '', formData.td_fecha_2da || '', formData.tdpa_fecha || '', formData.influenza_fecha || '').length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {getVaccineAlerts(formData.fum || '', formData.td_fecha_1ra || '', formData.td_fecha_2da || '', formData.tdpa_fecha || '', formData.influenza_fecha || '').map((alert, i) => (
+                          <div key={i} className="bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider flex items-center gap-2 animate-in fade-in slide-in-from-left-2 transition-all">
+                            <AlertCircle className="w-3 h-3" />
+                            {alert}
+                          </div>
+                        ))}
+                      </div>
+                    ) : formData.fum ? (
+                      <div className="text-[9px] text-emerald-600 font-bold uppercase tracking-widest flex items-center gap-2">
+                        <Save className="w-3 h-3" />
+                        Todo al corriente con biológicos
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+                {renderInput("Td 1ra Dosis (F)", "td_fecha_1ra", "date")}
+                {renderInput("Td 2da Dosis (F)", "td_fecha_2da", "date")}
+                {renderInput("Td 3ra Dosis (F)", "td_fecha_3ra", "date")}
+                {renderInput("Tdpa (F)", "tdpa_fecha", "date")}
+                {renderInput("Influenza (F)", "influenza_fecha", "date")}
+                <div className="hidden md:block"></div>
+              </div>
+
+              <div className="md:col-span-3 pt-6 border-t border-[#141414]/5 grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-6">
+                <div className="md:col-span-3">
+                  <p className="text-[10px] font-bold opacity-30 uppercase tracking-[0.2em] mb-4">Laboratorios y Suplementación</p>
+                </div>
+                {renderInput("Tamiz DM (Glucosa)", "tamiz_dm")}
+                {renderInput("BH (Hb)", "bh_hb")}
+              </div>
               {renderInput("Tipo de Sangre", "tipo_sangre", "text", false, [
                 { value: '', label: 'Seleccionar' },
                 { value: 'A', label: 'A' },
@@ -568,6 +634,9 @@ export default function CensusForm({ onSave, onCancel, initialData, token }: Cen
                     { value: 'Puerperio post parto/ DIU', label: 'Puerperio post parto/ DIU' }
                   ])}
                 </div>
+                <div className="md:col-span-3">
+                  {renderInput("Plan de Manejo en el Puerperio", "plan_manejo_puerperio")}
+                </div>
               </div>
             </div>
           </section>
@@ -608,6 +677,9 @@ export default function CensusForm({ onSave, onCancel, initialData, token }: Cen
                 </div>
                 {renderInput("Seguimiento TS", "seguimiento_ts")}
                 {renderInput("Fecha Act. TS", "fecha_actualizacion_ts", "date")}
+              </div>
+              <div className="md:col-span-3 pt-4 border-t border-[#141414]/5">
+                {renderInput("Observaciones generales", "observaciones_generales", "textarea")}
               </div>
             </div>
           </section>
