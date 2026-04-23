@@ -98,6 +98,9 @@ export const checkCriteria = (record: any, type: string): boolean => {
     case 'sdg_41':
       return weeks >= 41;
       
+    case 'sdg_37_40':
+      return weeks >= 37 && weeks < 41;
+      
     case 'no_update':
       return calculateDaysSinceUpdate(record.fecha_ultima_consulta) > 30;
       

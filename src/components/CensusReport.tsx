@@ -388,6 +388,7 @@ export default function CensusReport({ records, user, onBack }: CensusReportProp
 
   const SHORTCUTS = [
     { id: 'sdg_41', label: 'Término Pre-Prolongado', sub: '> 41 SDG', icon: ClockAlert, color: 'bg-red-500' },
+    { id: 'sdg_37_40', label: 'Control de Término', sub: '37 a 40.6 SDG', icon: ClockAlert, color: 'bg-emerald-500' },
     { id: 'no_update', label: 'Sin Actualización', sub: '> 30 Días', icon: History, color: 'bg-amber-500' },
     { id: 'missed_apt', label: 'Citas Vencidas', sub: 'No Asistió', icon: CalendarOff, color: 'bg-orange-500' },
     { id: 'cesarea_38', label: 'Cesárea Previa', sub: '> 38 SDG', icon: AlertCircle, color: 'bg-rose-500' },
@@ -442,7 +443,7 @@ export default function CensusReport({ records, user, onBack }: CensusReportProp
       </div>
 
       {/* ── Shortcuts ── */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 no-print">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 no-print">
         {SHORTCUTS.map(s => {
           const Icon = s.icon;
           const count = records.filter(r => checkCriteria(r, s.id)).length;

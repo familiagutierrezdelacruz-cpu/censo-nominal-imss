@@ -62,10 +62,11 @@ export default function Login({ onLogin }: LoginProps) {
           )}
 
           <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest font-bold opacity-50 ml-1">Usuario</label>
+            <label htmlFor="login-username" className="text-[10px] uppercase tracking-widest font-bold opacity-50 ml-1">Usuario</label>
             <div className="relative">
               <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 opacity-30" />
               <input
+                id="login-username"
                 type="text"
                 required
                 className="w-full bg-[#E4E3E0]/30 border border-[#141414]/10 rounded-xl py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-[#141414]/5 transition-all font-medium"
@@ -77,10 +78,11 @@ export default function Login({ onLogin }: LoginProps) {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest font-bold opacity-50 ml-1">Contraseña</label>
+            <label htmlFor="login-password" className="text-[10px] uppercase tracking-widest font-bold opacity-50 ml-1">Contraseña</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 opacity-30" />
               <input
+                id="login-password"
                 type="password"
                 required
                 className="w-full bg-[#E4E3E0]/30 border border-[#141414]/10 rounded-xl py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-[#141414]/5 transition-all font-medium"

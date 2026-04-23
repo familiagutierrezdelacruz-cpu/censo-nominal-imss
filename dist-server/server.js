@@ -119,7 +119,7 @@ db.exec("\n  CREATE TABLE IF NOT EXISTS zonas (\n    id INTEGER PRIMARY KEY AUTO
 db.exec("\n  CREATE TABLE IF NOT EXISTS health_units (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    nombre TEXT UNIQUE,\n    clues TEXT UNIQUE,\n    zona_id INTEGER,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY(zona_id) REFERENCES zonas(id)\n  )\n");
 db.exec("\n  CREATE TABLE IF NOT EXISTS users (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    username TEXT UNIQUE,\n    password TEXT,\n    role TEXT DEFAULT 'UNIT_USER', -- 'ADMIN', 'ESTATAL', 'REGIONAL', 'ZONAL', 'UNIT_USER'\n    health_unit_id INTEGER,\n    estado_id INTEGER,\n    region_id INTEGER,\n    zona_id INTEGER,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY(health_unit_id) REFERENCES health_units(id),\n    FOREIGN KEY(estado_id) REFERENCES estados(id),\n    FOREIGN KEY(region_id) REFERENCES regiones(id),\n    FOREIGN KEY(zona_id) REFERENCES zonas(id)\n  )\n");
 db.exec("\n  CREATE TABLE IF NOT EXISTS push_subscriptions (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    user_id INTEGER NOT NULL,\n    subscription TEXT NOT NULL,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY(user_id) REFERENCES users(id)\n  )\n");
-db.exec("\n  CREATE TABLE IF NOT EXISTS census (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    health_unit_id INTEGER,\n    folio TEXT UNIQUE,\n    nombre TEXT,\n    curp TEXT,\n    telefono TEXT,\n    domicilio TEXT,\n    reporte_mp TEXT,\n    folio_intransferible TEXT,\n    tipo_localidad TEXT,\n    derechohabiencia TEXT,\n    fecha_nacimiento TEXT,\n    condicion TEXT,\n    gestas INTEGER,\n    cesareas INTEGER,\n    fecha_ultima_cesarea TEXT,\n    partos INTEGER,\n    abortos INTEGER,\n    fecha_ultimo_aborto TEXT,\n    fum TEXT,\n    riesgo_obstetrico TEXT,\n    factores_riesgo TEXT,\n    riesgo_social TEXT,\n    salud_mental_fecha TEXT,\n    salud_mental_puntaje INTEGER,\n    tas INTEGER,\n    tad INTEGER,\n    td_fecha_1ra TEXT,\n    td_fecha_2da TEXT,\n    td_fecha_3ra TEXT,\n    tdpa_fecha TEXT,\n    influenza_fecha TEXT,\n    tamiz_dm TEXT,\n    bh_hb TEXT,\n    tipo_sangre TEXT,\n    rh TEXT,\n    vih_resultado TEXT,\n    vih_fecha TEXT,\n    sifilis_resultado TEXT,\n    sifilis_fecha TEXT,\n    ego_resultado TEXT,\n    ego_fecha TEXT,\n    acido_folico TEXT,\n    fumarato_ferroso TEXT,\n    aas TEXT,\n    calcio TEXT,\n    estado_salud_actual TEXT,\n    plan_seguridad TEXT,\n    plan_seguridad_fecha TEXT,\n    plan_manejo TEXT,\n    ref_mater_hospital TEXT,\n    ref_mater_acudio TEXT,\n    ref_mater_resultado TEXT,\n    ref_urgencias_hospital TEXT,\n    ref_urgencias_acudio TEXT,\n    ref_urgencias_resultado TEXT,\n    derivacion_plataforma_comunitaria TEXT,\n    control_parteria_tradicional TEXT,\n    nombre_partera TEXT,\n    conclusion_embarazo TEXT,\n    sdg_nacimiento INTEGER,\n    fecha_atencion_evento TEXT,\n    lugar_atencion_evento TEXT,\n    estado_salud_materna_puerperio TEXT,\n    rn_estado TEXT,\n    rn_genero TEXT,\n    rn_salud TEXT,\n    tamiz_metabolico_fecha TEXT,\n    tamiz_metabolico_sospechoso TEXT,\n    tamiz_auditivo_fecha TEXT,\n    tamiz_auditivo_sospechoso TEXT,\n    mpf_eleccion TEXT,\n    mpf_aplicado TEXT,\n    motivo_rechazo_mpf TEXT,\n    diagnostico_especifico TEXT,\n    club_embarazadas TEXT,\n    seguimiento_ts TEXT,\n    fecha_actualizacion_ts TEXT,\n    fecha_ultima_consulta TEXT,\n    fecha_proxima_cita TEXT,\n    medico_nombre TEXT,\n    medico_cedula TEXT,\n    medico_atencion TEXT,\n    nucleo_nombre TEXT,\n    is_historical INTEGER DEFAULT 0,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY(health_unit_id) REFERENCES health_units(id)\n  )\n");
+db.exec("\n  CREATE TABLE IF NOT EXISTS census (\n    id INTEGER PRIMARY KEY AUTOINCREMENT,\n    health_unit_id INTEGER,\n    folio TEXT UNIQUE,\n    nombre TEXT,\n    curp TEXT,\n    telefono TEXT,\n    domicilio TEXT,\n    reporte_mp TEXT,\n    folio_intransferible TEXT,\n    tipo_localidad TEXT,\n    derechohabiencia TEXT,\n    fecha_nacimiento TEXT,\n    condicion TEXT,\n    gestas INTEGER,\n    cesareas INTEGER,\n    fecha_ultima_cesarea TEXT,\n    partos INTEGER,\n    abortos INTEGER,\n    fecha_ultimo_aborto TEXT,\n    fum TEXT,\n    riesgo_obstetrico TEXT,\n    factores_riesgo TEXT,\n    riesgo_social TEXT,\n    salud_mental_fecha TEXT,\n    salud_mental_puntaje INTEGER,\n    tas INTEGER,\n    tad INTEGER,\n    td_fecha_1ra TEXT,\n    td_fecha_2da TEXT,\n    td_fecha_3ra TEXT,\n    tdpa_fecha TEXT,\n    influenza_fecha TEXT,\n    tamiz_dm TEXT,\n    bh_hb TEXT,\n    tipo_sangre TEXT,\n    rh TEXT,\n    vih_resultado TEXT,\n    vih_fecha TEXT,\n    sifilis_resultado TEXT,\n    sifilis_fecha TEXT,\n    ego_resultado TEXT,\n    ego_fecha TEXT,\n    acido_folico TEXT,\n    fumarato_ferroso TEXT,\n    aas TEXT,\n    calcio TEXT,\n    estado_salud_actual TEXT,\n    plan_seguridad TEXT,\n    plan_seguridad_fecha TEXT,\n    plan_manejo TEXT,\n    ref_mater_hospital TEXT,\n    ref_mater_acudio TEXT,\n    ref_mater_resultado TEXT,\n    ref_urgencias_hospital TEXT,\n    ref_urgencias_acudio TEXT,\n    ref_urgencias_resultado TEXT,\n    derivacion_plataforma_comunitaria TEXT,\n    control_parteria_tradicional TEXT,\n    nombre_partera TEXT,\n    conclusion_embarazo TEXT,\n    sdg_nacimiento INTEGER,\n    fecha_atencion_evento TEXT,\n    lugar_atencion_evento TEXT,\n    estado_salud_materna_puerperio TEXT,\n    rn_estado TEXT,\n    rn_genero TEXT,\n    rn_salud TEXT,\n    tamiz_metabolico_fecha TEXT,\n    tamiz_metabolico_sospechoso TEXT,\n    tamiz_auditivo_fecha TEXT,\n    tamiz_auditivo_sospechoso TEXT,\n    mpf_eleccion TEXT,\n    mpf_aplicado TEXT,\n    motivo_rechazo_mpf TEXT,\n    diagnostico_especifico TEXT,\n    club_embarazadas TEXT,\n    seguimiento_ts TEXT,\n    fecha_actualizacion_ts TEXT,\n    fecha_ultima_consulta TEXT,\n    fecha_proxima_cita TEXT,\n    medico_nombre TEXT,\n    medico_cedula TEXT,\n    medico_atencion TEXT,\n    nucleo_nombre TEXT,\n    observaciones_generales TEXT,\n    is_historical INTEGER DEFAULT 0,\n    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n    FOREIGN KEY(health_unit_id) REFERENCES health_units(id)\n  )\n");
 // Initial database check
 console.log("[DB] Initializing database at: ".concat(DB_PATH));
 var tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
@@ -149,6 +149,7 @@ var validColumns = [
     "club_embarazadas", "seguimiento_ts", "fecha_actualizacion_ts",
     "fecha_ultima_consulta", "fecha_proxima_cita", "medico_nombre", "medico_cedula", "medico_atencion", "nucleo_nombre",
     "fecha_usg_reciente", "conclusiones_usg",
+    "observaciones_generales",
     "is_historical"
 ];
 db.transaction(function () {
@@ -324,7 +325,7 @@ function startServer() {
                     // Auth Routes
                     app.post("/api/auth/login", function (req, res) {
                         var _a = req.body, username = _a.username, password = _a.password;
-                        var user = db.prepare("\n      SELECT u.*, h.nombre as health_unit_name, e.nombre as estado_name, r.nombre as region_name, z.nombre as zona_name\n      FROM users u \n      LEFT JOIN health_units h ON u.health_unit_id = h.id \n      LEFT JOIN estados e ON u.estado_id = e.id\n      LEFT JOIN regiones r ON u.region_id = r.id\n      LEFT JOIN zonas z ON u.zona_id = z.id\n      WHERE u.username = ?\n    ").get(username);
+                        var user = db.prepare("\n      SELECT u.*, h.nombre as health_unit_name, h.clues, e.nombre as estado_name, r.nombre as region_name, z.nombre as zona_name\n      FROM users u \n      LEFT JOIN health_units h ON u.health_unit_id = h.id \n      LEFT JOIN estados e ON u.estado_id = e.id\n      LEFT JOIN regiones r ON u.region_id = r.id\n      LEFT JOIN zonas z ON u.zona_id = z.id\n      WHERE u.username = ?\n    ").get(username);
                         if (!user || !bcrypt.compareSync(password, user.password)) {
                             return res.status(401).json({ error: "Credenciales inválidas" });
                         }
@@ -334,6 +335,7 @@ function startServer() {
                             role: user.role,
                             health_unit_id: user.health_unit_id,
                             health_unit_name: user.health_unit_name,
+                            health_unit_clues: user.clues,
                             estado_id: user.estado_id,
                             estado_name: user.estado_name,
                             region_id: user.region_id,
@@ -349,6 +351,7 @@ function startServer() {
                                 role: user.role,
                                 health_unit_id: user.health_unit_id,
                                 health_unit_name: user.health_unit_name,
+                                health_unit_clues: user.clues,
                                 estado_id: user.estado_id,
                                 estado_name: user.estado_name,
                                 region_id: user.region_id,
@@ -568,7 +571,7 @@ function startServer() {
                         try {
                             var includeHistorical = req.query.historical === 'true';
                             var _b = getHierarchyFilter(req.user), condition = _b.condition, params = _b.params;
-                            var query = "\n        SELECT c.*, \n               h.nombre as health_unit_name,\n               z.nombre as zona_name,\n               r.nombre as region_name,\n               e.nombre as estado_name,\n               z.id as zona_id,\n               r.id as region_id,\n               e.id as estado_id\n        FROM census c \n        LEFT JOIN health_units h ON c.health_unit_id = h.id \n        LEFT JOIN zonas z ON h.zona_id = z.id\n        LEFT JOIN regiones r ON z.region_id = r.id\n        LEFT JOIN estados e ON r.estado_id = e.id\n        WHERE (".concat(condition, ") \n        AND (").concat(includeHistorical ? '1=1' : 'COALESCE(c.is_historical, 0) = 0', ")\n        ORDER BY c.created_at DESC\n      ");
+                            var query = "\n        SELECT c.*, \n               h.nombre as health_unit_name,\n               z.nombre as zona_name,\n               r.nombre as region_name,\n               e.nombre as estado_name,\n               z.id as zona_id,\n               r.id as region_id,\n               e.id as estado_id,\n               h.clues as health_unit_clues\n        FROM census c \n        LEFT JOIN health_units h ON c.health_unit_id = h.id \n        LEFT JOIN zonas z ON h.zona_id = z.id\n        LEFT JOIN regiones r ON z.region_id = r.id\n        LEFT JOIN estados e ON r.estado_id = e.id\n        WHERE (".concat(condition, ") \n        AND (").concat(includeHistorical ? '1=1' : 'COALESCE(c.is_historical, 0) = 0', ")\n        ORDER BY c.created_at DESC\n      ");
                             var data = (_a = db.prepare(query)).all.apply(_a, params);
                             res.json(data);
                         }
@@ -919,7 +922,11 @@ function startServer() {
                     });
                     if (!(process.env.NODE_ENV !== "production")) return [3 /*break*/, 2];
                     return [4 /*yield*/, createViteServer({
-                            server: { middlewareMode: true },
+                            server: {
+                                middlewareMode: true,
+                                allowedHosts: true,
+                                host: true
+                            },
                             appType: "spa",
                         })];
                 case 1:

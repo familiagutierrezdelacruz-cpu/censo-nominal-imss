@@ -76,13 +76,9 @@ export default function Dashboard({ records, user, onUpdate, onArchive }: Dashbo
 
   // 4. Term Pregnancies (37 - 40.6 SDG)
   const termPregnancies = pregnantRecords.filter(r => {
-    const sdgStr = calculateSDG(r.fum);
-    const sdgMatch = sdgStr.match(/^(\d+) sem (\d+) d/);
-    if (sdgMatch) {
-      const weeks = parseInt(sdgMatch[1], 10);
-      return weeks >= 37 && weeks <= 40;
-    }
-    return false;
+    const fumDate = r.fum ? parseISO(r.fum) : null;
+    const weeks = fumDate && isValid(fumDate) ? Math.floor(differenceInDays(new Date(), fumDate) / 7) : 0;
+    return weeks >= 37 && weeks < 41;
   });
 
   // 4. Coopland Risk Distribution (Pregnant Only)
@@ -142,15 +138,12 @@ export default function Dashboard({ records, user, onUpdate, onArchive }: Dashbo
     // Overdue/Term check (only for currently pregnant women)
     if (isPregnant) {
       const sdgStr = calculateSDG(r.fum);
-      const sdgMatch = sdgStr.match(/^(\d+) sem (\d+) d/);
-      if (sdgMatch) {
-        const weeks = parseInt(sdgMatch[1], 10);
+        const weeks = fumDate && isValid(fumDate) ? Math.floor(differenceInDays(new Date(), fumDate) / 7) : 0;
         if (weeks >= 41) {
           current.overdue++;
-        } else if (weeks >= 37 && weeks <= 40) {
+        } else if (weeks >= 37 && weeks < 41) {
           current.term++;
         }
-      }
     }
 
     hierarchyGroups.set(key, current);
@@ -186,9 +179,8 @@ export default function Dashboard({ records, user, onUpdate, onArchive }: Dashbo
       <div className="flex items-center gap-3">
         <LayoutDashboard className="w-8 h-8" />
         <div>
-          <h2 className="text-2xl font-serif italic">Dashboard</h2>
           <p className="text-xs opacity-50 uppercase tracking-widest font-bold">
-            Indicadores para: {user?.role === 'ADMIN' ? 'Tablero National' : (
+            Indicadores para: {user?.role === 'ADMIN' ? 'Tablero Nacional' : (
               user?.health_unit_name ||
               user?.zona_name ||
               user?.region_name ||
@@ -380,7 +372,7 @@ export default function Dashboard({ records, user, onUpdate, onArchive }: Dashbo
               <span className="text-xl font-mono font-bold text-amber-700">{riskData[1].value}</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-blue-50 rounded-xl border border-blue-100">
-              <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">Emb. a Término (37 - 40.6 SDG)</span>
+              <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">Control de Término (37 - 40.6 SDG)</span>
               <span className="text-xl font-mono font-bold text-blue-700">{termPregnancies.length}</span>
             </div>
             <div className="flex justify-between items-center p-3 bg-red-50 rounded-xl border border-red-100">

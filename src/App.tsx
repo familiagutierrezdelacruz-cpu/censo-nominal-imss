@@ -22,7 +22,8 @@ import {
   PlusCircle,
   List as ListIcon,
   Upload,
-  Bell
+  Bell,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CensusRecord } from './types/census';
@@ -202,13 +203,7 @@ export default function App() {
     }
   }, [isOnline, token]);
 
-  useEffect(() => {
-    if (records.length > 0) {
-      console.log('Total records:', records.length);
-      console.log('Active records:', records.filter(r => Number(r.is_historical) !== 1).length);
-      console.log('Historical records:', records.filter(r => Number(r.is_historical) === 1).length);
-    }
-  }, [records]);
+  // Debug logs removed for production
 
   const handleLogin = (auth: AuthResponse) => {
     setToken(auth.token);
@@ -256,7 +251,7 @@ export default function App() {
         return;
       }
 
-      const response = await fetch('/api/census?historical=true', {
+      const response = await fetch(`/api/census?historical=true&t=${Date.now()}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -552,6 +547,7 @@ export default function App() {
                 setView('dashboard');
                 setSelectedRecord(null);
               }}
+              title="Dashboard"
               className={cn(
                 "w-full flex items-center gap-3 p-3 rounded transition-all",
                 view === 'dashboard' ? "bg-[#E4E3E0] text-[#141414]" : "hover:bg-white/10"
@@ -565,6 +561,7 @@ export default function App() {
                 setView('records');
                 setSelectedRecord(null);
               }}
+              title="Censo Nominal"
               className={cn(
                 "w-full flex items-center gap-3 p-3 rounded transition-all",
                 view === 'records' ? "bg-[#E4E3E0] text-[#141414]" : "hover:bg-white/10"
@@ -578,6 +575,7 @@ export default function App() {
                 setView('historical');
                 setSelectedRecord(null);
               }}
+              title="Histórico"
               className={cn(
                 "w-full flex items-center gap-3 p-3 rounded transition-all",
                 view === 'historical' ? "bg-[#E4E3E0] text-[#141414]" : "hover:bg-white/10"
@@ -591,6 +589,7 @@ export default function App() {
                 setSelectedRecord(null);
                 setView('form');
               }}
+              title="Nuevo Registro"
               className={cn(
                 "w-full flex items-center gap-3 p-3 rounded transition-all",
                 view === 'form' && !selectedRecord ? "bg-[#E4E3E0] text-[#141414]" : "hover:bg-white/10"
@@ -604,6 +603,7 @@ export default function App() {
                 setSelectedRecord(null);
                 setView('nucleos');
               }}
+              title="Gestionar Núcleos"
               className={cn(
                 "w-full flex items-center gap-3 p-3 rounded transition-all",
                 view === 'nucleos' ? "bg-[#E4E3E0] text-[#141414]" : "hover:bg-white/10"
@@ -617,6 +617,7 @@ export default function App() {
                 setSelectedRecord(null);
                 setView('report');
               }}
+              title="Reporte Sábana"
               className={cn(
                 "w-full flex items-center gap-3 p-3 rounded transition-all",
                 view === 'report' ? "bg-[#E4E3E0] text-[#141414]" : "hover:bg-white/10"
@@ -664,6 +665,24 @@ export default function App() {
                 <LogOut className="w-4 h-4" />
               </button>
             </div>
+            
+            {/* Version Info for Cache Debugging */}
+            <div className="mt-4 pt-4 border-t border-white/5 text-[10px] hidden md:block">
+              <div className="flex items-center justify-between opacity-30 uppercase tracking-tighter">
+                <span>Versión 1.1.2</span>
+                <span>Hoy</span>
+              </div>
+              <button 
+                onClick={() => {
+                  if (confirm('¿Desea forzar la recarga del sistema?')) {
+                    window.location.href = window.location.pathname + '?v=' + Date.now();
+                  }
+                }}
+                className="w-full mt-2 py-1.5 bg-white/5 hover:bg-white/10 rounded text-[9px] font-bold uppercase transition-all tracking-widest text-[#B38E5D]"
+              >
+                Forzar Actualización
+              </button>
+            </div>
           </div>
         </nav>
 
@@ -672,15 +691,15 @@ export default function App() {
           <header className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 no-print">
             <div className="flex items-start gap-4">
               <div className="md:hidden w-12 h-12 bg-white rounded-lg p-1 shadow-sm">
-                <img src="/logo.png" alt="" className="w-full h-full object-contain" />
+                <img src="/logo.png" alt="Censo Materno - IMSS Bienestar" className="w-full h-full object-contain" />
               </div>
               <div>
                 <p className="font-serif italic text-sm text-[#005944] uppercase tracking-widest mb-1">
                   {view === 'dashboard' ? 'Resumen Estadístico' : view === 'records' ? 'Gestión de Censo' : view === 'historical' ? 'Repositorio Histórico' : view === 'form' ? 'Ingreso de Datos' : view === 'nucleos' ? 'Administración' : view === 'report' ? 'Reportes' : view === 'admin' ? 'Configuración Global' : 'Detalle de Registro'}
                 </p>
-                <h2 className="text-4xl font-bold tracking-tighter">
+                <h1 className="text-4xl font-bold tracking-tighter">
                   {view === 'dashboard' ? 'Dashboard' : view === 'records' ? 'Censo Nominal' : view === 'historical' ? 'Histórico' : view === 'form' ? 'Nuevo Paciente' : view === 'nucleos' ? 'Núcleos Básicos' : view === 'report' ? 'Reporte General' : view === 'admin' ? 'Panel de Control' : selectedRecord?.nombre}
-                </h2>
+                </h1>
               </div>
             </div>
 
@@ -734,17 +753,16 @@ export default function App() {
               <div className="relative w-full md:w-80">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 opacity-30" />
                 <input
+                  id="search-records"
                   type="text"
+                  aria-label="Buscar por nombre, folio o CURP"
                   placeholder="Nombre, folio o CURP..."
                   className="w-full bg-white/50 border border-[#141414]/10 rounded-lg py-2 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-[#141414]/5 transition-all"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Escape' && setSearchTerm('')}
                 />
               </div>
-              <button className="bg-[#141414] text-[#E4E3E0] px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition-all flex items-center gap-2">
-                <Search className="w-4 h-4" />
-                BUSCAR
-              </button>
 
               <button
                 onClick={handleSubscribe}
@@ -838,7 +856,7 @@ export default function App() {
                   }}
                   className="text-[10px] uppercase tracking-widest font-bold text-red-600 hover:text-red-700 transition-colors ml-auto flex items-center gap-1"
                 >
-                  <SyncIcon className="w-3 h-3" />
+                  <X className="w-3 h-3" />
                   Limpiar Filtros
                 </button>
               )}
